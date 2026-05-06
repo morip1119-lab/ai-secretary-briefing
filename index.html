@@ -11,6 +11,51 @@
     .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
     .card-glow { box-shadow: 0 0 30px rgba(99, 102, 241, 0.15); }
     .tag-pill { display: inline-flex; align-items: center; gap: 4px; }
+
+    /* Lightbox */
+    .zoom-img { cursor: zoom-in; transition: opacity 0.2s; }
+    .zoom-img:hover { opacity: 0.85; }
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 100%;
+      max-height: 90vh;
+      border-radius: 12px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.8);
+      cursor: zoom-out;
+    }
+    #lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      color: white;
+      font-size: 32px;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    #lightbox-close:hover { opacity: 1; }
+    .zoom-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
@@ -51,10 +96,20 @@
           <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
           <div class="w-3 h-3 rounded-full bg-green-500/60"></div>
           <span class="text-slate-400 text-xs ml-3">チャットワーク — AI管理グループ</span>
+          <span class="ml-auto text-slate-500 text-xs">🔍 クリックで拡大</span>
         </div>
-        <img src="chatwork-screenshot.png" alt="チャットワークに届く朝のブリーフィング" class="w-full">
+        <div class="relative">
+          <img src="chatwork-screenshot.png" alt="チャットワークに届く朝のブリーフィング" class="w-full zoom-img" onclick="openLightbox(this.src)">
+          <div class="zoom-hint">🔍 クリックで拡大</div>
+        </div>
       </div>
-      <p class="text-slate-500 text-xs mt-3 text-center">※ 個人情報・機密情報には処理済み</p>
+      <p class="text-slate-500 text-xs mt-3 text-center">※ 個人情報・機密情報にはモザイク処理済み</p>
+
+      <!-- Lightbox -->
+      <div id="lightbox" onclick="closeLightbox()">
+        <span id="lightbox-close" onclick="closeLightbox()">✕</span>
+        <img id="lightbox-img" src="" alt="拡大画像">
+      </div>
     </section>
 
     <!-- 4パーツ -->
@@ -281,5 +336,19 @@
     <p class="mt-1">森川卓典 / 2026年5月</p>
   </footer>
 
+  <script>
+    function openLightbox(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
 </body>
 </html>
