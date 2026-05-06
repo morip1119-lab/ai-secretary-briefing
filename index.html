@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI秘書システム｜朝のブリーフィング自動化</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;900&display=swap');
+    body { font-family: 'Noto Sans JP', sans-serif; }
+    .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
+    .card-glow { box-shadow: 0 0 30px rgba(99, 102, 241, 0.15); }
+    .tag-pill { display: inline-flex; align-items: center; gap: 4px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <!-- Hero -->
+  <section class="gradient-bg border-b border-slate-800 px-6 py-20 text-center">
+    <div class="max-w-3xl mx-auto">
+      <span class="inline-block bg-indigo-500/20 text-indigo-300 text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full border border-indigo-500/30 mb-6">
+        AI自動化ツール 課題提出
+      </span>
+      <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-4 leading-tight">
+        AI秘書システム<br>
+        <span class="text-indigo-400">朝のブリーフィング自動化</span>
+      </h1>
+      <p class="text-slate-400 text-lg mt-4 leading-relaxed">
+        毎朝9時に Gmail・Googleカレンダーを自動読み取り、<br>
+        Claude APIが要約してチャットワークへ届けるシステム
+      </p>
+      <div class="flex flex-wrap justify-center gap-3 mt-8">
+        <span class="tag-pill bg-slate-800 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">⚙️ n8n Cloud</span>
+        <span class="tag-pill bg-slate-800 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">🤖 Claude API</span>
+        <span class="tag-pill bg-slate-800 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">📧 Gmail</span>
+        <span class="tag-pill bg-slate-800 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">📅 Googleカレンダー</span>
+        <span class="tag-pill bg-slate-800 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">💬 チャットワーク</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="max-w-4xl mx-auto px-6 py-16 space-y-20">
+
+    <!-- Screenshot -->
+    <section>
+      <h2 class="text-2xl font-bold mb-2">報告ツールの画面</h2>
+      <p class="text-slate-400 text-sm mb-6">毎朝9時にチャットワークに届く、実際のブリーフィングメッセージ</p>
+      <div class="rounded-2xl overflow-hidden border border-slate-700 card-glow">
+        <div class="bg-slate-800 px-4 py-3 flex items-center gap-2 border-b border-slate-700">
+          <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
+          <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+          <div class="w-3 h-3 rounded-full bg-green-500/60"></div>
+          <span class="text-slate-400 text-xs ml-3">チャットワーク — AI管理グループ</span>
+        </div>
+        <img src="chatwork-screenshot.png" alt="チャットワークに届く朝のブリーフィング" class="w-full">
+      </div>
+      <p class="text-slate-500 text-xs mt-3 text-center">※ 個人情報・機密情報には処理済み</p>
+    </section>
+
+    <!-- 4パーツ -->
+    <section>
+      <h2 class="text-2xl font-bold mb-2">4つのパーツ</h2>
+      <p class="text-slate-400 text-sm mb-8">このツールがどう動いているかの構成</p>
+
+      <div class="grid md:grid-cols-2 gap-5">
+        <!-- トリガー -->
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 card-glow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-xl">⏰</div>
+            <div>
+              <div class="text-xs text-yellow-400 font-bold tracking-wider uppercase">トリガー</div>
+              <div class="font-bold text-white">いつ動くか</div>
+            </div>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-4">
+            <div class="font-semibold text-white mb-1">n8n Cloud — スケジュール実行</div>
+            <div class="text-slate-400 text-sm">毎朝9時に自動起動。定刻に動くことで、朝の始業前に必ずブリーフィングが届いている状態を作る。</div>
+          </div>
+        </div>
+
+        <!-- ソース元 -->
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 card-glow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-xl">📂</div>
+            <div>
+              <div class="text-xs text-blue-400 font-bold tracking-wider uppercase">ソース元</div>
+              <div class="font-bold text-white">データの場所</div>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="bg-slate-800 rounded-xl p-4">
+              <div class="font-semibold text-white mb-1">📧 Gmail</div>
+              <div class="text-slate-400 text-sm">直近24時間の未読メールを取得。複数の会社のメールを1つのGmailに集約している。</div>
+            </div>
+            <div class="bg-slate-800 rounded-xl p-4">
+              <div class="font-semibold text-white mb-1">📅 Googleカレンダー</div>
+              <div class="text-slate-400 text-sm">1週間分の予定を取得。誕生日・重複スケジュールなども把握できる。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 処理する場所 -->
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 card-glow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-xl">🤖</div>
+            <div>
+              <div class="text-xs text-pink-400 font-bold tracking-wider uppercase">処理する場所</div>
+              <div class="font-bold text-white">データを加工する場所</div>
+            </div>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-4">
+            <div class="font-semibold text-white mb-1">n8n Cloud + Claude API</div>
+            <div class="text-slate-400 text-sm">n8nがGmail・カレンダーのデータを取得して集約。ClaudeがAIとして要約・重要度判断・今週のタスク提案を作成する。</div>
+          </div>
+        </div>
+
+        <!-- 届ける先 -->
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 card-glow">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-green-500/20 border border-green-500/30 flex items-center justify-center text-xl">💬</div>
+            <div>
+              <div class="text-xs text-green-400 font-bold tracking-wider uppercase">届ける先</div>
+              <div class="font-bold text-white">完成レポートの送り先</div>
+            </div>
+          </div>
+          <div class="bg-slate-800 rounded-xl p-4">
+            <div class="font-semibold text-white mb-1">チャットワーク — AI管理グループ</div>
+            <div class="text-slate-400 text-sm">毎日使っているチャットワークに届けることで、確認漏れがない。既存のワークスペースに専用グループを作成して運用。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- フロー図 -->
+      <div class="mt-8 bg-slate-900 border border-slate-700 rounded-2xl p-6">
+        <div class="text-sm text-slate-400 mb-5 text-center font-medium">自動化フロー</div>
+        <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
+          <div class="bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 px-4 py-2 rounded-xl text-center">
+            <div class="text-lg">⏰</div>
+            <div class="font-bold text-xs mt-1">毎朝9時</div>
+          </div>
+          <div class="text-slate-600 text-lg">→</div>
+          <div class="bg-blue-500/10 border border-blue-500/30 text-blue-300 px-4 py-2 rounded-xl text-center">
+            <div class="text-lg">📧📅</div>
+            <div class="font-bold text-xs mt-1">Gmail + Calendar</div>
+          </div>
+          <div class="text-slate-600 text-lg">→</div>
+          <div class="bg-slate-800 border border-slate-600 text-slate-300 px-4 py-2 rounded-xl text-center">
+            <div class="text-lg">⚙️</div>
+            <div class="font-bold text-xs mt-1">n8n 集約</div>
+          </div>
+          <div class="text-slate-600 text-lg">→</div>
+          <div class="bg-pink-500/10 border border-pink-500/30 text-pink-300 px-4 py-2 rounded-xl text-center">
+            <div class="text-lg">🤖</div>
+            <div class="font-bold text-xs mt-1">Claude API</div>
+          </div>
+          <div class="text-slate-600 text-lg">→</div>
+          <div class="bg-green-500/10 border border-green-500/30 text-green-300 px-4 py-2 rounded-xl text-center">
+            <div class="text-lg">💬</div>
+            <div class="font-bold text-xs mt-1">チャットワーク</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 工夫したポイント -->
+    <section>
+      <h2 class="text-2xl font-bold mb-2">工夫したポイント</h2>
+      <p class="text-slate-400 text-sm mb-8">作るうえで意識したこと・ぶつかった課題と解決</p>
+
+      <div class="space-y-5">
+
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="text-3xl mt-1">🔗</div>
+            <div>
+              <h3 class="font-bold text-white text-lg mb-2">複数データソースを1つのブリーフィングに統合</h3>
+              <p class="text-slate-400 leading-relaxed">メール（Gmail）とカレンダー（Googleカレンダー）という2つのデータを、n8nのAggregateノードで1つにまとめてからClaudeに渡す構成にした。これにより「今日の予定」と「重要メール」を別々に確認する手間がなくなり、朝の確認が1メッセージで完結する。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="text-3xl mt-1">🤖</div>
+            <div>
+              <h3 class="font-bold text-white text-lg mb-2">ClaudeにAIらしい判断をさせる</h3>
+              <p class="text-slate-400 leading-relaxed">単純な転送ではなく、Claudeが重要度を判断して要約・提案まで行う構成にした。スケジュールの重複（例：同時刻に別の予定が入っているケース）や誕生日のある日には「確認してください」という形で能動的にアドバイスが届くようにした。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="text-3xl mt-1">🔍</div>
+            <div>
+              <h3 class="font-bold text-white text-lg mb-2">ぶつかった課題：メール取得エラーのデバッグ</h3>
+              <p class="text-slate-400 leading-relaxed">朝のブリーフィングで「重要な未読メールの詳細情報が取得できておりません」というメッセージが続いた。最初はGmailのOAuth認証が切れたと判断したが、n8nでテスト実行するとGmailノードは正常に11件取得できていることが判明。</p>
+              <div class="mt-4 bg-slate-800 rounded-xl p-4">
+                <div class="text-sm font-bold text-white mb-2">原因の特定プロセス</div>
+                <ol class="text-slate-400 text-sm space-y-2 list-none">
+                  <li class="flex gap-2"><span class="text-indigo-400 font-bold flex-shrink-0">1.</span>Gmailノード → 正常（11件取得できていた）</li>
+                  <li class="flex gap-2"><span class="text-indigo-400 font-bold flex-shrink-0">2.</span>Googleカレンダーノード → 正常（予定データが届いていた）</li>
+                  <li class="flex gap-2"><span class="text-indigo-400 font-bold flex-shrink-0">3.</span>ClaudeのInputを確認 → カレンダーデータのみでメールデータが見当たらない</li>
+                  <li class="flex gap-2"><span class="text-indigo-400 font-bold flex-shrink-0">4.</span>Aggregateノードの設定に問題がある可能性を特定</li>
+                </ol>
+              </div>
+              <p class="text-slate-400 text-sm mt-4">各ノードのInput/Outputを1つずつ追うことで、「どこで情報が落ちているか」を特定できた。エラーメッセージだけを見るのではなく、フロー全体をステップごとに確認することが重要だと学んだ。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="text-3xl mt-1">📐</div>
+            <div>
+              <h3 class="font-bold text-white text-lg mb-2">完成形のHTMLを先に作ってからAIに渡した</h3>
+              <p class="text-slate-400 leading-relaxed">講義で学んだ「完成形の絵から作る」を実践した。出力フォーマット（今日の予定・重要メール・今週中にやること・一言コメントの4セクション）を先に設計してClaudeのプロンプトに盛り込んだことで、毎回安定したフォーマットのブリーフィングが届くようになった。</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- コスト -->
+    <section>
+      <h2 class="text-2xl font-bold mb-2">月額コスト</h2>
+      <p class="text-slate-400 text-sm mb-6">ほぼ無料で動いている</p>
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-slate-800 border-b border-slate-700">
+              <th class="text-left px-6 py-4 text-slate-400 font-semibold">ツール</th>
+              <th class="text-left px-6 py-4 text-slate-400 font-semibold">費用</th>
+              <th class="text-left px-6 py-4 text-slate-400 font-semibold hidden md:table-cell">備考</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <tr><td class="px-6 py-4 text-white">Claude API</td><td class="px-6 py-4 text-white font-bold">〜100円/月</td><td class="px-6 py-4 text-slate-400 hidden md:table-cell">朝のブリーフィングのみの使用量</td></tr>
+            <tr><td class="px-6 py-4 text-white">n8n Cloud</td><td class="px-6 py-4 text-green-400 font-bold">無料</td><td class="px-6 py-4 text-slate-400 hidden md:table-cell">月1,000回まで無料。毎朝1回 = 月30回</td></tr>
+            <tr><td class="px-6 py-4 text-white">Gmail / Googleカレンダー</td><td class="px-6 py-4 text-green-400 font-bold">無料</td><td class="px-6 py-4 text-slate-400 hidden md:table-cell">既存のGoogleアカウントを使用</td></tr>
+            <tr><td class="px-6 py-4 text-white">チャットワーク</td><td class="px-6 py-4 text-green-400 font-bold">既存費用のみ</td><td class="px-6 py-4 text-slate-400 hidden md:table-cell">追加費用なし</td></tr>
+            <tr class="bg-slate-800">
+              <td class="px-6 py-4 text-white font-bold">合計</td>
+              <td class="px-6 py-4 text-indigo-400 font-black text-base">月100円程度</td>
+              <td class="px-6 py-4 text-slate-400 hidden md:table-cell">Claude APIの従量課金のみ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 今後 -->
+    <section>
+      <h2 class="text-2xl font-bold mb-2">今後の拡張予定</h2>
+      <p class="text-slate-400 text-sm mb-6">フェーズ1が動いたので、次のステップへ</p>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-slate-900 border border-green-500/30 rounded-2xl p-5">
+          <div class="text-green-400 text-xs font-bold tracking-wider uppercase mb-3">✓ 完成</div>
+          <div class="font-bold text-white mb-2">朝のブリーフィング</div>
+          <div class="text-slate-400 text-sm">毎朝9時に予定・メール・タスク提案を自動送信</div>
+        </div>
+        <div class="bg-slate-900 border border-orange-500/30 rounded-2xl p-5">
+          <div class="text-orange-400 text-xs font-bold tracking-wider uppercase mb-3">→ 次のステップ</div>
+          <div class="font-bold text-white mb-2">Zoom議事録の自動作成</div>
+          <div class="text-slate-400 text-sm">Zoom会議の文字起こしをClaudeが整形してNotionへ保存</div>
+        </div>
+        <div class="bg-slate-900 border border-slate-600 rounded-2xl p-5">
+          <div class="text-slate-500 text-xs font-bold tracking-wider uppercase mb-3">将来</div>
+          <div class="font-bold text-slate-300 mb-2">メール返信の下書き自動生成</div>
+          <div class="text-slate-500 text-sm">重要メールへの返信下書きをGmailのドラフトに自動作成</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 py-10 text-center text-slate-600 text-sm">
+    <p>AI秘書システム — 朝のブリーフィング自動化</p>
+    <p class="mt-1">森川卓典 / 2026年5月</p>
+  </footer>
+
+</body>
+</html>
