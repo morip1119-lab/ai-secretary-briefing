@@ -155,11 +155,20 @@ function toast(msg) {
 }
 
 async function api(path, options) {
-  const res = await fetch(path, {
-    method: options ? 'POST' : 'GET',
-    headers: { 'content-type': 'application/json' },
-    body: options ? JSON.stringify(options) : undefined,
-  });
+  // サーバーを止めたまま操作するとボタンが無言で固まるので、必ず打ち切って理由を出す
+  const timeout = AbortSignal.timeout(60000);
+  let res;
+  try {
+    res = await fetch(path, {
+      method: options ? 'POST' : 'GET',
+      headers: { 'content-type': 'application/json' },
+      body: options ? JSON.stringify(options) : undefined,
+      signal: timeout,
+    });
+  } catch (e) {
+    if (e.name === 'TimeoutError') throw new Error('応答がありません。サーバーが止まっていないか確認してください。');
+    throw new Error('サーバーに接続できません。node src/cli.js review が動いているか確認してください。');
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'エラーが発生しました');
   return data;
