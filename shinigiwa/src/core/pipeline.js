@@ -43,8 +43,22 @@ export async function buildPost(subject, { config = loadConfig(), provider, with
     post.image = { path: renderCard(post, subject, { config }), generatedAt: new Date().toISOString() };
   }
 
+  if (canAutoApprove(post, config)) {
+    post.status = 'approved';
+    post.approvedAt = new Date().toISOString();
+    post.autoApproved = true;
+  }
+
   savePost(post);
   return post;
+}
+
+/** 完全自動運転に切り替えたときだけ、人間のレビューを飛ばす */
+export function canAutoApprove(post, config = loadConfig()) {
+  if (!config.posting.autoApprove) return false;
+  if (!post.guard?.ok) return false;
+  if (config.posting.autoApproveRequiresNoWarnings && post.guard.warnings.length) return false;
+  return true;
 }
 
 /** 本文を人力で直したあとに整合性を取り直す */

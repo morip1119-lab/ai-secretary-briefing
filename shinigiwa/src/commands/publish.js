@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import { env, loadConfig } from '../core/config.js';
+import { renderCard } from '../core/imagecard.js';
 import { c, log } from '../core/logger.js';
 import { getPost, getSubject, listPosts, loadState, savePost, saveState, upsertSubject } from '../core/store.js';
 import { inspect } from '../core/guard.js';
@@ -43,7 +45,7 @@ export async function run({ flags }) {
 
     const result = await publishPost({
       body: post.body,
-      imagePath: post.image?.path ?? null,
+      imagePath: ensureImage(post, subject, config),
       replyText: sourceReplyFor(post, config),
     });
 
@@ -80,6 +82,13 @@ export async function run({ flags }) {
   log.blank();
   log.info(c.dim(`  X API 課金の概算: $${totalCost.toFixed(3)}`));
   log.blank();
+}
+
+/** 画像は追跡していないので、CI など手元にファイルが無い環境では作り直す */
+function ensureImage(post, subject, config) {
+  if (!config.image.enabled || !post.image?.path) return null;
+  if (fs.existsSync(post.image.path)) return post.image.path;
+  return renderCard(post, subject, { config });
 }
 
 function selectTargets({ flags, config, now }) {

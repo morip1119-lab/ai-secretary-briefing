@@ -18,7 +18,10 @@
     "charLimit": 3000,
     "charLimitMode": "premium",
     "minGapDaysSameSubject": 180,
-    "minGapDaysSameCategory": 3
+    "minGapDaysSameCategory": 3,
+    "autoApprove": false,
+    "autoApproveRequiresNoWarnings": true,
+    "queueBufferDays": 2
   },
 
   "editorial": {

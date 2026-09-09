@@ -12,7 +12,7 @@
     "setup:fonts": "node scripts/setup-fonts.mjs",
     "review": "node src/cli.js review",
     "doctor": "node src/cli.js doctor",
-    "test": "node --test test/"
+    "test": "node --test \"test/*.test.js\""
   },
   "engines": {
     "node": ">=20"

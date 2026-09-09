@@ -14,6 +14,7 @@ const COMMANDS = {
   image: { desc: '画像を作り直す', load: () => import('./commands/image.js') },
   queue: { desc: '承認済みの原稿を投稿枠に割り当てる', load: () => import('./commands/queue.js') },
   publish: { desc: '投稿時刻を過ぎたものを X に投稿する', load: () => import('./commands/publish.js') },
+  auto: { desc: '補充→予約→投稿をまとめて実行する（cron 用）', load: () => import('./commands/auto.js') },
   metrics: { desc: '投稿の実績を取得する（読み取り課金あり）', load: () => import('./commands/metrics.js') },
   stats: { desc: '伸びたネタの傾向を集計する', load: () => import('./commands/stats.js') },
 };

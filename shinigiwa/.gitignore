@@ -2,11 +2,14 @@ node_modules/
 .env
 .env.local
 
-# 生成物（原稿・画像・実績ログ）はローカル管理
-data/posts/*.json
+# 画像は原稿から再生成できるので追跡しない
 data/media/
-data/state.json
-data/metrics.json
+
+# 原稿・投稿履歴・実績は追跡する（GitHub Actions で自動投稿するときに状態が必要になる）
+# ローカルだけで運用したい場合は下 3 行のコメントを外す
+# data/posts/*.json
+# data/state.json
+# data/metrics.json
 
 # ダウンロードしたフォント
 assets/fonts/*.woff2
