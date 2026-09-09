@@ -1,0 +1,16 @@
+{
+  "name": "AI Secretary Briefing (static site)",
+  "install": "python3 --version",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "python3 -m http.server 8000 --bind 0.0.0.0 --directory ."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 8000
+    }
+  ]
+}
