@@ -101,16 +101,19 @@ export async function fetchMetrics(tweetIds, { dryRun = env.dryRun } = {}) {
     return {};
   }
   const client = await getClient();
-  const res = await client.v2.tweets(tweetIds, {
-    'tweet.fields': ['public_metrics', 'non_public_metrics', 'created_at'],
-  });
   const out = {};
-  for (const t of res.data ?? []) {
-    out[t.id] = {
-      ...t.public_metrics,
-      ...(t.non_public_metrics ?? {}),
-      fetchedAt: new Date().toISOString(),
-    };
+  // lookup は 1 リクエスト 100 件までなので分割する
+  for (let i = 0; i < tweetIds.length; i += 100) {
+    const res = await client.v2.tweets(tweetIds.slice(i, i + 100), {
+      'tweet.fields': ['public_metrics', 'non_public_metrics', 'created_at'],
+    });
+    for (const t of res.data ?? []) {
+      out[t.id] = {
+        ...t.public_metrics,
+        ...(t.non_public_metrics ?? {}),
+        fetchedAt: new Date().toISOString(),
+      };
+    }
   }
   return out;
 }
