@@ -8,6 +8,7 @@ import { inspect } from '../src/core/guard.js';
 import { zonedToUtc, localDateString } from '../src/core/schedule.js';
 import { wrapJapanese } from '../src/core/imagecard.js';
 import { scoreSubject } from '../src/core/scorer.js';
+import { parseDraftJson } from '../src/core/llm.js';
 import { loadConfig } from '../src/core/config.js';
 
 const config = loadConfig();
@@ -91,8 +92,17 @@ test('没年のない人物は弾く', () => {
   assert.ok(v.errors.some((e) => e.includes('存命')));
 });
 
-test('没後が浅い題材は弾く', () => {
-  const v = inspect(makePost(), { ...subject, deathYear: new Date().getFullYear() - 1 }, { config, state: emptyState });
+test('没後が浅い題材は止めずに警告する', () => {
+  const recent = { ...subject, deathYear: new Date().getFullYear() - 1, ageAtDeath: null };
+  const v = inspect(makePost(), recent, { config, state: emptyState });
+  assert.equal(v.errors.length, 0, v.errors.join(' / '));
+  assert.ok(v.warnings.some((w) => w.includes('没後')));
+});
+
+test('設定で没後年数のブロックを復活できる', () => {
+  const strict = { ...config, safety: { ...config.safety, minYearsSinceDeath: 5 } };
+  const recent = { ...subject, deathYear: new Date().getFullYear() - 1, ageAtDeath: null };
+  const v = inspect(makePost(), recent, { config: strict, state: emptyState });
   assert.ok(v.errors.some((e) => e.includes('没後')));
 });
 
@@ -120,15 +130,40 @@ test('死の手段の具体的な描写を弾く', () => {
   assert.ok(v.errors.some((e) => e.includes('手段')));
 });
 
-test('自殺の題材には相談窓口が要る', () => {
+test('相談窓口を空にしてあるので自殺の題材でも要求されない', () => {
+  assert.equal(config.safety.suicideFooter, '');
+  const v = inspect(makePost(), { ...subject, deathCategory: 'suicide' }, { config, state: emptyState });
+  assert.ok(!v.errors.some((e) => e.includes('相談窓口')));
+});
+
+test('相談窓口を設定した場合は付与を強制する', () => {
+  const footer = '※ 相談窓口のテキスト';
+  const withPolicy = { ...config, safety: { ...config.safety, suicideFooter: footer } };
   const suicideSubject = { ...subject, deathCategory: 'suicide' };
-  const without = inspect(makePost(), suicideSubject, { config, state: emptyState });
+
+  const without = inspect(makePost(), suicideSubject, { config: withPolicy, state: emptyState });
   assert.ok(without.errors.some((e) => e.includes('相談窓口')));
 
-  const withFooter = makePost({ draft: { ...draft, footer: config.safety.suicideFooter } });
-  withFooter.body = renderBody(withFooter.draft, config);
-  const v = inspect(withFooter, suicideSubject, { config, state: emptyState });
+  const withFooter = makePost({ draft: { ...draft, footer } });
+  withFooter.body = renderBody(withFooter.draft, withPolicy);
+  const v = inspect(withFooter, suicideSubject, { config: withPolicy, state: emptyState });
   assert.ok(!v.errors.some((e) => e.includes('相談窓口')));
+});
+
+test('台帳に無い年号・食い違う年齢を警告する', () => {
+  const post = makePost({
+    draft: { ...draft, sections: [{ title: '最期', bullets: ['2015年に事件が起きた', '享年70で世を去った'] }] },
+  });
+  post.body = renderBody(post.draft, config);
+  const v = inspect(post, { ...subject, birthYear: 1940 }, { config, state: emptyState });
+  assert.ok(v.warnings.some((w) => w.includes('2015')), v.warnings.join(' / '));
+  assert.ok(v.warnings.some((w) => w.includes('享年')));
+});
+
+test('台帳自体の生没年と享年の矛盾を検出する', () => {
+  const broken = { ...subject, birthYear: 1940, deathYear: 1990, ageAtDeath: 80 };
+  const v = inspect(makePost(), broken, { config, state: emptyState });
+  assert.ok(v.warnings.some((w) => w.includes('矛盾')));
 });
 
 test('同じ人物を短期間に再投稿させない', () => {
@@ -143,6 +178,34 @@ test('落差が大きいほどスコアが高い', () => {
   const high = { ...subject, signals: { fame: 10, fallDepth: 10, jpRecognition: 10, gapSurprise: 10, storyClarity: 10 } };
   const low = { ...subject, signals: { fame: 10, fallDepth: 1, jpRecognition: 10, gapSurprise: 1, storyClarity: 10 } };
   assert.ok(scoreSubject(high, { config, state: emptyState }) > scoreSubject(low, { config, state: emptyState }));
+});
+
+test('最近の死ほどスコアが高い', () => {
+  const year = new Date().getFullYear();
+  const recent = { ...subject, deathYear: year - 2 };
+  const old = { ...subject, deathYear: year - 80 };
+  assert.ok(scoreSubject(recent, { config, state: emptyState }) > scoreSubject(old, { config, state: emptyState }));
+});
+
+/* ---------------- LLM の出力の取り込み ---------------- */
+
+test('コードフェンスや前置きが付いた JSON も読める', () => {
+  const payload = { hook: 'フック', sections: [{ title: 'a', bullets: ['b'] }] };
+  const wrapped = '```json\n' + JSON.stringify(payload) + '\n```';
+  assert.deepEqual(parseDraftJson(wrapped, subject).sections, payload.sections);
+
+  const chatty = `はい、作成しました。\n${JSON.stringify(payload)}\nご確認ください。`;
+  assert.equal(parseDraftJson(chatty, subject).hook, 'フック');
+});
+
+test('出典は LLM の出力ではなく台帳を正とする', () => {
+  const payload = { hook: 'フック', sections: [{ title: 'a', bullets: ['b'] }], sources: ['https://捏造.example'] };
+  assert.deepEqual(parseDraftJson(JSON.stringify(payload), subject).sources, subject.sources);
+});
+
+test('hook や sections が欠けた出力は拒否する', () => {
+  assert.throws(() => parseDraftJson('{"hook":"あるだけ"}', subject));
+  assert.throws(() => parseDraftJson('これは JSON ではない', subject));
 });
 
 /* ---------------- schedule ---------------- */

@@ -109,7 +109,7 @@ async function callOpenAI(subject, config) {
 
 /* ---------------- 共通 ---------------- */
 
-function parseDraftJson(text, subject) {
+export function parseDraftJson(text, subject) {
   const cleaned = text
     .trim()
     .replace(/^```(?:json)?/i, '')

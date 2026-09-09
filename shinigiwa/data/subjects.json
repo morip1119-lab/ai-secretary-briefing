@@ -1,6 +1,194 @@
 {
   "subjects": [
     {
+      "id": "matthew-perry",
+      "name": "マシュー・ペリー",
+      "nameEn": "Matthew Perry",
+      "region": "overseas",
+      "field": "俳優",
+      "birthYear": 1969,
+      "deathYear": 2023,
+      "ageAtDeath": 54,
+      "deathCategory": "overdose",
+      "deathCause": "ケタミンの急性作用による事故死",
+      "causeConfirmed": true,
+      "badge": "悲劇",
+      "hook": "世界一有名なシットコムで1話1億円を稼いだ男は、依存症と20年戦い、自宅の風呂で見つかった",
+      "lead": "彼が演じたのは、いつも軽口を叩いて場を和ませる男だった。その撮影の裏側で、本人は自分の依存症と一人で戦っていた。",
+      "story": {
+        "sections": [
+          {
+            "title": "1話で1億円",
+            "bullets": [
+              "1994年から10年続いた『フレンズ』のチャンドラー役で、世界的なスターになる",
+              "後半シーズンでは主要キャスト6人が1話あたり100万ドルのギャラを得ていたとされる"
+            ]
+          },
+          {
+            "title": "笑わせながら壊れていた",
+            "bullets": [
+              "撮影期間の大半をアルコールと処方薬の依存に苦しんでいたと、本人が後年の回顧録で明かしている",
+              "体重の増減が激しく、シーズンごとに見た目が変わっていたのはそのためだったという",
+              "治療施設への入所や手術を何度も繰り返し、回復と再発を行き来した"
+            ]
+          },
+          {
+            "title": "あまりに静かな幕切れ",
+            "bullets": [
+              "2023年10月、ロサンゼルスの自宅で意識のない状態で発見され、54歳で死去",
+              "検死の結果、死因はケタミンの急性作用とされ、事故死と結論づけられた",
+              "翌年、薬物の入手に関与したとして複数の人物が刑事責任を問われる事態となった"
+            ]
+          }
+        ]
+      },
+      "take": "彼は依存症を隠さず本に書き、他人を助けようとした側の人間だった。それでも助からなかったという事実のほうが、どんな警告よりも重い。",
+      "closing": "みんなを笑わせ続けた男の最期の部屋には、誰もいなかった。",
+      "signals": {
+        "fame": 9,
+        "fallDepth": 8,
+        "jpRecognition": 7,
+        "gapSurprise": 8,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Matthew_Perry"
+      ],
+      "tags": [
+        "ハリウッド",
+        "依存症",
+        "最近"
+      ],
+      "status": "ready",
+      "notes": "没後が浅い。事実の裏取りを必ず行うこと。関係者の刑事責任は断定しない。"
+    },
+    {
+      "id": "diego-maradona",
+      "name": "ディエゴ・マラドーナ",
+      "nameEn": "Diego Maradona",
+      "region": "overseas",
+      "field": "サッカー選手",
+      "birthYear": 1960,
+      "deathYear": 2020,
+      "ageAtDeath": 60,
+      "deathCategory": "illness",
+      "deathCause": "急性肺水腫を伴う慢性心不全",
+      "causeConfirmed": true,
+      "badge": "栄光と転落",
+      "hook": "たった一人でワールドカップを獲った男は、60歳の体で心臓が止まるまで、誰にも止められなかった",
+      "lead": "神と呼ばれた選手が、引退後の30年をどう過ごしたか。そこには、頂点を早く極めすぎた人間の典型が全部詰まっている。",
+      "story": {
+        "sections": [
+          {
+            "title": "神と呼ばれた",
+            "bullets": [
+              "1986年のワールドカップでアルゼンチンを優勝に導き、大会の象徴となった",
+              "1試合で見せた『神の手』と5人抜きは、いまも語り継がれている",
+              "母国では宗教的とも言えるほどの崇拝の対象になった"
+            ]
+          },
+          {
+            "title": "頂点のあとの30年",
+            "bullets": [
+              "薬物問題が表面化し、1994年のワールドカップではドーピング検査の結果により大会を去った",
+              "引退後は体重が大きく増え、心臓の不調で入院を繰り返すようになる",
+              "監督業や公の発言で話題を集める一方、健康状態は悪化し続けた"
+            ]
+          },
+          {
+            "title": "あまりに慌ただしい幕切れ",
+            "bullets": [
+              "2020年11月、脳の手術を受けて退院した直後、自宅で60歳で死去",
+              "死因は急性肺水腫を伴う慢性心不全とされている",
+              "退院後の医療体制をめぐって捜査が行われ、関係者が刑事責任を問われる事態となった"
+            ]
+          }
+        ]
+      },
+      "take": "20代で人生の最高到達点を過ぎてしまった人間に、残りの30年をどう生きろというのか。彼の転落は怠惰ではなく、頂点が早すぎたことの副作用に見える。",
+      "closing": "国を優勝させた男の最期を看取ったのは、家族でも仲間でもなかった。",
+      "signals": {
+        "fame": 10,
+        "fallDepth": 8,
+        "jpRecognition": 8,
+        "gapSurprise": 7,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Diego_Maradona"
+      ],
+      "tags": [
+        "スポーツ",
+        "薬物",
+        "最近"
+      ],
+      "status": "ready",
+      "notes": "医療関係者の刑事事件は係争を含むため、個人を特定した断定は避ける。"
+    },
+    {
+      "id": "shimura-ken",
+      "name": "志村けん",
+      "nameEn": "Ken Shimura",
+      "region": "japan",
+      "field": "コメディアン",
+      "birthYear": 1950,
+      "deathYear": 2020,
+      "ageAtDeath": 70,
+      "deathCategory": "illness",
+      "deathCause": "新型コロナウイルス感染症による肺炎",
+      "causeConfirmed": true,
+      "badge": "悲劇",
+      "hook": "40年間、日本中を笑わせ続けた人が、家族の誰にも会えないまま、たった3週間で逝った",
+      "lead": "テレビの前で育った世代なら、必ず一度は彼で笑っている。その最期は、あまりにも静かで、あまりにも急だった。",
+      "story": {
+        "sections": [
+          {
+            "title": "国民的コメディアン",
+            "bullets": [
+              "『8時だョ!全員集合』は最高視聴率50%を超え、日本中が土曜の夜にテレビの前に集まった",
+              "バカ殿様や変なおじさんは、世代を越えて真似され続けた",
+              "70歳を迎えてもなお、その年に主演映画の公開と大河ドラマ出演が控えていた"
+            ]
+          },
+          {
+            "title": "たった3週間",
+            "bullets": [
+              "2020年3月、体調不良を訴えて入院し、新型コロナウイルスへの感染が確認される",
+              "人工呼吸器と人工肺による治療が続けられたが、容体は回復しなかった",
+              "感染対策のため、家族は最後まで面会することができなかった"
+            ]
+          },
+          {
+            "title": "あまりに残酷な幕切れ",
+            "bullets": [
+              "2020年3月29日、70歳で死去",
+              "遺体とも対面できないまま火葬が行われ、兄が遺骨を受け取ったと報じられた",
+              "日本で最初期の著名な犠牲者となり、その死が社会全体の危機感を一変させた"
+            ]
+          }
+        ]
+      },
+      "take": "彼の死が重かったのは有名だったからではない。「誰にも看取られない」という当時の現実を、国民全員が同時に理解してしまったからだ。",
+      "closing": "日本で一番人を笑わせた人の葬儀に、誰も立ち会えなかった。",
+      "signals": {
+        "fame": 8,
+        "fallDepth": 7,
+        "jpRecognition": 10,
+        "gapSurprise": 7,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://ja.wikipedia.org/wiki/志村けん"
+      ],
+      "tags": [
+        "日本",
+        "お笑い",
+        "最近"
+      ],
+      "status": "ready",
+      "notes": "没後が浅く、いまも悼む人が多い題材。煽った書き方は絶対にしない。"
+    },
+    {
       "id": "anna-nicole-smith",
       "name": "アンナ・ニコル・スミス",
       "nameEn": "Anna Nicole Smith",
@@ -51,13 +239,24 @@
       },
       "take": "彼女が最後まで欲しかったのは金ではなく、「本気だった」と誰かに認められることだったのかもしれない。世間はその一点だけを、最後まで与えなかった。",
       "closing": "63歳差の花嫁は、結局何ひとつ受け取らないまま、夫より12年早く同じ場所へ行った。",
-      "signals": { "fame": 8, "fallDepth": 9, "jpRecognition": 5, "gapSurprise": 9, "storyClarity": 10 },
-      "sources": ["https://en.wikipedia.org/wiki/Anna_Nicole_Smith"],
-      "tags": ["セレブ", "遺産", "法廷"],
+      "signals": {
+        "fame": 8,
+        "fallDepth": 9,
+        "jpRecognition": 5,
+        "gapSurprise": 9,
+        "storyClarity": 10
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Anna_Nicole_Smith"
+      ],
+      "tags": [
+        "セレブ",
+        "遺産",
+        "法廷"
+      ],
       "status": "ready",
       "notes": "投稿前に年号と年齢をソースで再確認すること。"
     },
-
     {
       "id": "howard-hughes",
       "name": "ハワード・ヒューズ",
@@ -110,13 +309,24 @@
       },
       "take": "彼は世界中のものを買えたのに、最後に選んだのは「誰とも会わない自由」だった。金で買える選択肢が増えすぎた人間の末路が、これなのかもしれない。",
       "closing": "20億ドルを持った男の最期の住所は、カーテンを閉め切ったホテルの一室だった。",
-      "signals": { "fame": 9, "fallDepth": 9, "jpRecognition": 6, "gapSurprise": 10, "storyClarity": 9 },
-      "sources": ["https://en.wikipedia.org/wiki/Howard_Hughes"],
-      "tags": ["富豪", "隠遁", "アメリカ"],
+      "signals": {
+        "fame": 9,
+        "fallDepth": 9,
+        "jpRecognition": 6,
+        "gapSurprise": 10,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Howard_Hughes"
+      ],
+      "tags": [
+        "富豪",
+        "隠遁",
+        "アメリカ"
+      ],
       "status": "ready",
       "notes": ""
     },
-
     {
       "id": "nikola-tesla",
       "name": "ニコラ・テスラ",
@@ -162,13 +372,24 @@
       },
       "take": "テスラが貧しく死んだのは無能だったからではなく、「請求書を書くこと」に一切の興味がなかったから。天才の弱点は、たいてい才能の外側にある。",
       "closing": "世界を明るくした男の部屋は、最後まで誰にも気づかれないほど静かだった。",
-      "signals": { "fame": 9, "fallDepth": 8, "jpRecognition": 7, "gapSurprise": 9, "storyClarity": 9 },
-      "sources": ["https://en.wikipedia.org/wiki/Nikola_Tesla"],
-      "tags": ["発明", "貧困", "孤独死"],
+      "signals": {
+        "fame": 9,
+        "fallDepth": 8,
+        "jpRecognition": 7,
+        "gapSurprise": 9,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Nikola_Tesla"
+      ],
+      "tags": [
+        "発明",
+        "貧困",
+        "孤独死"
+      ],
       "status": "ready",
       "notes": "ロイヤリティ放棄の逸話は諸説あるため断定しないこと。"
     },
-
     {
       "id": "michael-jackson",
       "name": "マイケル・ジャクソン",
@@ -213,13 +434,24 @@
       },
       "take": "彼を殺したのは薬そのものより、「王でい続けなければならない」という契約だったように見える。50公演を引き受けた時点で、逃げ場はなくなっていた。",
       "closing": "世界一のエンターテイナーが最後に望んだのは、ただ普通に眠ることだった。",
-      "signals": { "fame": 10, "fallDepth": 8, "jpRecognition": 10, "gapSurprise": 8, "storyClarity": 9 },
-      "sources": ["https://en.wikipedia.org/wiki/Death_of_Michael_Jackson"],
-      "tags": ["音楽", "薬物", "負債"],
+      "signals": {
+        "fame": 10,
+        "fallDepth": 8,
+        "jpRecognition": 10,
+        "gapSurprise": 8,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Death_of_Michael_Jackson"
+      ],
+      "tags": [
+        "音楽",
+        "薬物",
+        "負債"
+      ],
       "status": "ready",
       "notes": ""
     },
-
     {
       "id": "whitney-houston",
       "name": "ホイットニー・ヒューストン",
@@ -264,13 +496,23 @@
       },
       "take": "全盛期が完璧すぎた人ほど、その後の人生は「劣化の記録」として扱われてしまう。彼女を追い詰めたのは、他ならぬ彼女自身の最高傑作だったのかもしれない。",
       "closing": "音楽界最大の祭典の前夜、会場のすぐ上の階で、その声は途切れた。",
-      "signals": { "fame": 9, "fallDepth": 9, "jpRecognition": 8, "gapSurprise": 8, "storyClarity": 9 },
-      "sources": ["https://en.wikipedia.org/wiki/Death_of_Whitney_Houston"],
-      "tags": ["音楽", "薬物"],
+      "signals": {
+        "fame": 9,
+        "fallDepth": 9,
+        "jpRecognition": 8,
+        "gapSurprise": 8,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Death_of_Whitney_Houston"
+      ],
+      "tags": [
+        "音楽",
+        "薬物"
+      ],
       "status": "ready",
       "notes": ""
     },
-
     {
       "id": "elvis-presley",
       "name": "エルヴィス・プレスリー",
@@ -315,13 +557,23 @@
       },
       "take": "彼の周囲には、止める人間がいなかったのではない。止めると仕事がなくなる人間しかいなかった。スターの晩年が壊れる理由は、だいたいここにある。",
       "closing": "王座を降りる方法を、誰も彼に教えなかった。",
-      "signals": { "fame": 10, "fallDepth": 8, "jpRecognition": 8, "gapSurprise": 7, "storyClarity": 8 },
-      "sources": ["https://en.wikipedia.org/wiki/Death_of_Elvis_Presley"],
-      "tags": ["音楽", "薬物"],
+      "signals": {
+        "fame": 10,
+        "fallDepth": 8,
+        "jpRecognition": 8,
+        "gapSurprise": 7,
+        "storyClarity": 8
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Death_of_Elvis_Presley"
+      ],
+      "tags": [
+        "音楽",
+        "薬物"
+      ],
       "status": "ready",
       "notes": "死因は確定していないため、必ず「とされる」で処理すること。"
     },
-
     {
       "id": "judy-garland",
       "name": "ジュディ・ガーランド",
@@ -366,13 +618,23 @@
       },
       "take": "彼女は「壊れた大人」ではなく、「壊された子ども」がそのまま歳を取った人だった。虹の向こうを歌わされていたのは、13歳の時からずっとだ。",
       "closing": "虹の向こう側に、彼女の居場所はついになかった。",
-      "signals": { "fame": 8, "fallDepth": 9, "jpRecognition": 5, "gapSurprise": 8, "storyClarity": 9 },
-      "sources": ["https://en.wikipedia.org/wiki/Judy_Garland"],
-      "tags": ["ハリウッド", "児童スター"],
+      "signals": {
+        "fame": 8,
+        "fallDepth": 9,
+        "jpRecognition": 5,
+        "gapSurprise": 8,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Judy_Garland"
+      ],
+      "tags": [
+        "ハリウッド",
+        "児童スター"
+      ],
       "status": "ready",
       "notes": ""
     },
-
     {
       "id": "joe-louis",
       "name": "ジョー・ルイス",
@@ -417,13 +679,24 @@
       },
       "take": "落ちぶれたのではなく、稼いだ金が最初から自分のものではなかった。搾取の構造は、王者ですら例外にしない。",
       "closing": "無敵の拳が最後に握っていたのは、カジノの客に差し出す手だった。",
-      "signals": { "fame": 8, "fallDepth": 9, "jpRecognition": 4, "gapSurprise": 9, "storyClarity": 9 },
-      "sources": ["https://en.wikipedia.org/wiki/Joe_Louis"],
-      "tags": ["スポーツ", "税金", "アメリカ"],
+      "signals": {
+        "fame": 8,
+        "fallDepth": 9,
+        "jpRecognition": 4,
+        "gapSurprise": 9,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://en.wikipedia.org/wiki/Joe_Louis"
+      ],
+      "tags": [
+        "スポーツ",
+        "税金",
+        "アメリカ"
+      ],
       "status": "ready",
       "notes": ""
     },
-
     {
       "id": "rikidozan",
       "name": "力道山",
@@ -468,13 +741,24 @@
       },
       "take": "無敵の象徴だった人ほど、日常のささいな衝突に対して無防備になる。リングの上では誰にも負けない設定が、外では通用しなかった。",
       "closing": "日本中が「絶対に負けない」と信じた男は、たった一週間で消えた。",
-      "signals": { "fame": 8, "fallDepth": 8, "jpRecognition": 8, "gapSurprise": 8, "storyClarity": 8 },
-      "sources": ["https://ja.wikipedia.org/wiki/力道山"],
-      "tags": ["日本", "スポーツ", "昭和"],
+      "signals": {
+        "fame": 8,
+        "fallDepth": 8,
+        "jpRecognition": 8,
+        "gapSurprise": 8,
+        "storyClarity": 8
+      },
+      "sources": [
+        "https://ja.wikipedia.org/wiki/力道山"
+      ],
+      "tags": [
+        "日本",
+        "スポーツ",
+        "昭和"
+      ],
       "status": "ready",
       "notes": "事件の詳細には諸説あるため、加害者側の断定的記述は避けること。"
     },
-
     {
       "id": "ozaki-yutaka",
       "name": "尾崎豊",
@@ -518,13 +802,24 @@
       },
       "take": "彼が背負わされたのは音楽ではなく「若者の気持ち」そのものだった。代弁者に指名された人間は、自分の弱音を歌う場所を失う。",
       "closing": "誰かの気持ちを歌い続けた人の最期は、誰にも分からないままになった。",
-      "signals": { "fame": 8, "fallDepth": 7, "jpRecognition": 9, "gapSurprise": 8, "storyClarity": 8 },
-      "sources": ["https://ja.wikipedia.org/wiki/尾崎豊"],
-      "tags": ["日本", "音楽", "平成"],
+      "signals": {
+        "fame": 8,
+        "fallDepth": 7,
+        "jpRecognition": 9,
+        "gapSurprise": 8,
+        "storyClarity": 8
+      },
+      "sources": [
+        "https://ja.wikipedia.org/wiki/尾崎豊"
+      ],
+      "tags": [
+        "日本",
+        "音楽",
+        "平成"
+      ],
       "status": "ready",
       "notes": "死因・経緯が確定していないため断定表現は厳禁。"
     },
-
     {
       "id": "takahashi-korekiyo",
       "name": "高橋是清",
@@ -569,13 +864,24 @@
       },
       "take": "彼を殺したのは思想の対立ではなく、「予算を削られること」への怒りだった。金の話でしか動かない構図は、100年経っても変わっていない。",
       "closing": "国を三度救った老人の最期の仕事は、軍事費を削ることだった。",
-      "signals": { "fame": 7, "fallDepth": 7, "jpRecognition": 6, "gapSurprise": 9, "storyClarity": 8 },
-      "sources": ["https://ja.wikipedia.org/wiki/高橋是清"],
-      "tags": ["日本", "政治", "昭和"],
+      "signals": {
+        "fame": 7,
+        "fallDepth": 7,
+        "jpRecognition": 6,
+        "gapSurprise": 9,
+        "storyClarity": 8
+      },
+      "sources": [
+        "https://ja.wikipedia.org/wiki/高橋是清"
+      ],
+      "tags": [
+        "日本",
+        "政治",
+        "昭和"
+      ],
       "status": "ready",
       "notes": ""
     },
-
     {
       "id": "vincent-van-gogh",
       "name": "フィンセント・ファン・ゴッホ",
@@ -619,9 +925,20 @@
       },
       "take": "評価とは本人に届くとは限らない。「いつか分かってもらえる」は、たいてい本人が死んだあとに叶う残酷な約束だ。",
       "closing": "世界一有名な画家の口座には、最後まで金が入ってこなかった。",
-      "signals": { "fame": 9, "fallDepth": 8, "jpRecognition": 9, "gapSurprise": 8, "storyClarity": 9 },
-      "sources": ["https://ja.wikipedia.org/wiki/フィンセント・ファン・ゴッホ"],
-      "tags": ["芸術", "貧困"],
+      "signals": {
+        "fame": 9,
+        "fallDepth": 8,
+        "jpRecognition": 9,
+        "gapSurprise": 8,
+        "storyClarity": 9
+      },
+      "sources": [
+        "https://ja.wikipedia.org/wiki/フィンセント・ファン・ゴッホ"
+      ],
+      "tags": [
+        "芸術",
+        "貧困"
+      ],
       "status": "ready",
       "notes": "自死の扱い。手段の描写は禁止、相談窓口フッターが自動で付く。"
     }

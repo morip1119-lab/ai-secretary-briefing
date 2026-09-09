@@ -4,10 +4,12 @@ import { listPosts } from '../core/store.js';
 import { run as generate } from './generate.js';
 import { run as queue } from './queue.js';
 import { run as publish } from './publish.js';
+import { run as exportPosts } from './export.js';
 
 /**
  * cron から 1 コマンドで回すための入口。
- * 「在庫を補充 → 枠に入れる → 時間が来たものを出す」を順に実行する。
+ * 「在庫を補充 → 枠に入れる → 出す」を順に実行する。
+ * manual モードでは最後が「X に投稿」ではなく「手動で貼れる形に書き出し」になる。
  */
 export async function run({ flags }) {
   const config = loadConfig();
@@ -27,5 +29,7 @@ export async function run({ flags }) {
   }
 
   await queue({ flags: {} });
-  await publish({ flags: {} });
+
+  if (config.posting.mode === 'manual') await exportPosts({ flags: {} });
+  else await publish({ flags: {} });
 }

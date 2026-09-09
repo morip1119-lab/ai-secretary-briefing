@@ -6,6 +6,7 @@
   },
 
   "posting": {
+    "mode": "manual",
     "postsPerDay": 3,
     "maxPostsPerDay": 5,
     "timezone": "Asia/Tokyo",
@@ -38,12 +39,14 @@
   },
 
   "safety": {
-    "minYearsSinceDeath": 3,
+    "minYearsSinceDeath": 0,
+    "recentDeathWarnYears": 7,
     "blockLivingPeople": true,
     "requireSources": 1,
     "suicidePolicy": "hedged",
-    "suicideFooter": "※ こころの相談は「いのちの電話」0570-783-556 / #いのちSOS 0120-061-338",
+    "suicideFooter": "",
     "requireHedgeForUnconfirmedCause": true,
+    "checkNumberConsistency": true,
     "bannedPhrases": [
       "確実に",
       "絶対に",
@@ -94,7 +97,8 @@
       "execution": 6,
       "scandal": 4
     },
-    "recencyPenaltyYears": 10,
+    "recencyBonusYears": 20,
+    "recencyBonusMax": 15,
     "usedPenalty": 40
   }
 }

@@ -24,10 +24,13 @@ export function inspect(post, subject, { config = loadConfig(), state = null, no
 
   if (subject?.deathYear) {
     const years = now.getFullYear() - subject.deathYear;
-    if (years < s.minYearsSinceDeath) {
+    if (s.minYearsSinceDeath > 0 && years < s.minYearsSinceDeath) {
       errors.push(`没後 ${years} 年です。遺族配慮のため没後 ${s.minYearsSinceDeath} 年未満は対象外にしています。`);
-    } else if (years < s.minYearsSinceDeath + 5) {
-      warnings.push(`没後 ${years} 年とまだ新しい題材です。表現が過度に煽っていないか目視してください。`);
+    } else if (years <= (s.recentDeathWarnYears ?? 0)) {
+      warnings.push(
+        `没後 ${years} 年とかなり新しい題材です。遺族・関係者が読む前提で、` +
+          `事実の裏取りと煽りすぎていないかを必ず目視してください。`,
+      );
     }
   }
 
@@ -61,6 +64,9 @@ export function inspect(post, subject, { config = loadConfig(), state = null, no
       warnings.push('自殺を肯定的・美化するニュアンスの語が含まれている可能性があります。');
     }
   }
+
+  /* ---- LLM が数字を捏造していないか ---- */
+  if (s.checkNumberConsistency && subject) warnings.push(...checkNumbers(body, subject));
 
   /* ---- 名誉毀損・断定リスク ---- */
   for (const p of s.bannedPhrases ?? []) {
@@ -102,4 +108,40 @@ export function inspect(post, subject, { config = loadConfig(), state = null, no
   }
 
   return { ok: errors.length === 0, errors, warnings, checkedAt: new Date().toISOString(), weighted };
+}
+
+/**
+ * 本文に出てくる年号・年齢が台帳と矛盾していないかを見る。
+ * LLM に書かせると数字だけが静かに間違っていることがあり、これが一番見落としやすい。
+ */
+function checkNumbers(body, subject) {
+  const out = [];
+  const { birthYear, deathYear, ageAtDeath } = subject;
+
+  if (birthYear && deathYear) {
+    const years = [...body.matchAll(/(1[5-9]\d{2}|20\d{2})\s*年/g)].map((m) => Number(m[1]));
+    const strays = [...new Set(years)].filter((y) => y < birthYear || y > deathYear);
+    if (strays.length) {
+      out.push(`本文の年号 ${strays.join(', ')} が生没年（${birthYear}–${deathYear}）の外側です。事実誤認の可能性があります。`);
+    }
+  }
+
+  if (ageAtDeath) {
+    const ages = [...body.matchAll(/享年\s*(\d{1,3})|(\d{1,3})\s*歳で(?:死去|亡く|世を去|息を引き取)/g)].map((m) =>
+      Number(m[1] ?? m[2]),
+    );
+    const wrong = [...new Set(ages)].filter((a) => Math.abs(a - ageAtDeath) > 1);
+    if (wrong.length) {
+      out.push(`本文の年齢 ${wrong.join(', ')} が台帳の享年 ${ageAtDeath} と一致しません。`);
+    }
+  }
+
+  if (birthYear && deathYear && ageAtDeath) {
+    const span = deathYear - birthYear;
+    if (Math.abs(span - ageAtDeath) > 1) {
+      out.push(`台帳自体が矛盾しています（${birthYear}–${deathYear} なのに享年 ${ageAtDeath}）。`);
+    }
+  }
+
+  return out;
 }

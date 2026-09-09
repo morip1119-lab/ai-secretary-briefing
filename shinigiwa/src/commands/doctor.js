@@ -12,10 +12,14 @@ export async function run() {
 
   check('.env', fs.existsSync(ENV_FILE), fs.existsSync(ENV_FILE) ? '読み込み済み' : '未作成（.env.example をコピーしてください）');
 
-  const { missing } = env.xCredentials;
-  check('X の認証情報', missing.length === 0, missing.length ? `未設定: ${missing.join(', ')}` : '4つとも設定済み');
+  const manual = config.posting.mode === 'manual';
+  check('投稿方法', true, manual ? '手動（export で書き出して自分で貼る）' : 'X API 連携');
 
-  check('DRY_RUN', true, env.dryRun ? c.yellow('true（投稿は行われません）') : c.red('false（実際に投稿されます）'));
+  if (!manual) {
+    const { missing } = env.xCredentials;
+    check('X の認証情報', missing.length === 0, missing.length ? `未設定: ${missing.join(', ')}` : '4つとも設定済み');
+    check('DRY_RUN', true, env.dryRun ? c.yellow('true（投稿は行われません）') : c.red('false（実際に投稿されます）'));
+  }
 
   const provider = env.llmProvider;
   const keyOk =
@@ -46,11 +50,16 @@ export async function run() {
   log.blank();
   log.rule('運用コストの目安');
   const perDay = config.posting.postsPerDay;
-  const monthlyPosts = perDay * 30 * (config.posting.sourceReply ? 2 : 1);
-  const monthly = estimateCost({ posts: monthlyPosts, mediaUploads: perDay * 30 });
-  console.log(`  1日 ${perDay} 投稿 → X API 課金の概算 ${c.bold(`$${monthly.toFixed(2)} / 月`)}`);
-  console.log(c.dim('  ※ 本文に URL を入れると 1 投稿 $0.20 に跳ね上がるため既定で禁止しています'));
-  console.log(c.dim('  ※ 長文ポストと収益化には別途 X Premium の月額が必要です'));
+  if (manual) {
+    console.log(`  1日 ${perDay} 投稿・手動 → X API の課金は ${c.bold('$0')}`);
+    console.log(c.dim('  ※ 長文ポストと収益化には X Premium の月額が必要です'));
+  } else {
+    const monthlyPosts = perDay * 30 * (config.posting.sourceReply ? 2 : 1);
+    const monthly = estimateCost({ posts: monthlyPosts, mediaUploads: perDay * 30 });
+    console.log(`  1日 ${perDay} 投稿 → X API 課金の概算 ${c.bold(`$${monthly.toFixed(2)} / 月`)}`);
+    console.log(c.dim('  ※ 本文に URL を入れると 1 投稿 $0.20 に跳ね上がるため既定で禁止しています'));
+    console.log(c.dim('  ※ 長文ポストと収益化には別途 X Premium の月額が必要です'));
+  }
   log.blank();
 }
 

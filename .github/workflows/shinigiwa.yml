@@ -14,7 +14,7 @@ on:
         description: '実行するコマンド'
         type: choice
         default: auto
-        options: [auto, generate, queue, publish, doctor]
+        options: [auto, generate, queue, export, publish, doctor]
 
 concurrency:
   group: shinigiwa-post
@@ -62,8 +62,8 @@ jobs:
       - name: 実行
         run: node src/cli.js ${{ inputs.command || 'auto' }}
 
-      - name: 投稿状態をコミット
-        if: env.DRY_RUN == 'false'
+      - name: 原稿と投稿状態をコミット
+        if: always()
         run: |
           cd "$GITHUB_WORKSPACE"
           if [ -z "$(git status --porcelain shinigiwa/data)" ]; then

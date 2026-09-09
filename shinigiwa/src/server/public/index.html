@@ -218,6 +218,7 @@ function renderDetail() {
   }
   const g = post.guard || { errors: [], warnings: [], ok: true };
   const ch = state.config.channel;
+  const isManual = state.config.posting.mode === 'manual';
 
   $('detail').innerHTML = `
     <div class="grid">
@@ -283,7 +284,7 @@ function renderDetail() {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" style="margin-bottom:18px">
           <h2>判定</h2>
           <div class="body">
             <div class="actions">
@@ -293,6 +294,25 @@ function renderDetail() {
             <div style="font-size:11px;color:var(--muted);margin-top:10px">
               承認後は  node src/cli.js queue  で投稿枠に割り当てられます。
             </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>X に貼る</h2>
+          <div class="body">
+            <div class="actions">
+              <button id="copyBtn">本文をコピー</button>
+              ${post.sourceReply ? '<button id="copyReplyBtn">出典をコピー</button>' : ''}
+              ${post.imageUrl ? `<a href="${post.imageUrl}" download="${escapeHtml(post.id)}.png"><button>画像を保存</button></a>` : ''}
+            </div>
+            ${isManual && post.status !== 'posted' && post.status !== 'draft' ? `
+            <div class="actions">
+              <input id="postedUrl" placeholder="投稿URL（任意）" style="flex:1;min-width:160px;background:#0e1013;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font:inherit;font-size:12px">
+              <button class="primary" id="postedBtn">投稿した</button>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:10px">
+              「投稿した」を押さないと、同じ人物が再び候補に出てきます。
+            </div>` : ''}
           </div>
         </div>
       </div>
@@ -323,6 +343,30 @@ function renderDetail() {
     await api('/api/posts/' + encodeURIComponent(post.id) + '/reject', {});
     toast('却下しました');
   });
+  $('copyBtn').onclick = () => copyText(post.body, '本文をコピーしました');
+  if ($('copyReplyBtn')) $('copyReplyBtn').onclick = () => copyText(post.sourceReply, '出典をコピーしました');
+  if ($('postedBtn')) {
+    $('postedBtn').onclick = guarded(async () => {
+      await api('/api/posts/' + encodeURIComponent(post.id) + '/posted', { url: $('postedUrl').value || null });
+      toast('投稿済みとして記録しました');
+    });
+  }
+}
+
+async function copyText(text, message) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(message);
+  } catch {
+    // クリップボード API が使えない環境向けのフォールバック
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast(message);
+  }
 }
 
 /** 失敗を握りつぶさず必ず画面に出す。成功しても失敗しても一覧は取り直す。 */

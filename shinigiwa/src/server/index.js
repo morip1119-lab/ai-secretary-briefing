@@ -7,7 +7,7 @@ import { UserError, c, log } from '../core/logger.js';
 import { MEDIA_DIR } from '../core/paths.js';
 import { getPost, getSubject, listPosts, listSubjects, savePost } from '../core/store.js';
 import { rankSubjects } from '../core/scorer.js';
-import { buildPost, refreshPost, sourceReplyFor } from '../core/pipeline.js';
+import { buildPost, markPosted, refreshPost, sourceReplyFor } from '../core/pipeline.js';
 import { bodyStats } from '../core/formatter.js';
 import { renderCard } from '../core/imagecard.js';
 import { inspect } from '../core/guard.js';
@@ -115,6 +115,10 @@ async function handle(req, res) {
         post.status = 'rejected';
         post.rejectedReason = body.reason ?? null;
         savePost(post);
+        return json(res, 200, decorate(post));
+      }
+      case 'posted': {
+        markPosted(post, subject, { manual: true, url: body.url ?? null });
         return json(res, 200, decorate(post));
       }
       case 'image': {

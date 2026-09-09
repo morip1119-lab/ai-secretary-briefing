@@ -3,7 +3,7 @@ import { renderBody, renderSourceReply } from './formatter.js';
 import { generateDraft } from './llm.js';
 import { inspect } from './guard.js';
 import { renderCard } from './imagecard.js';
-import { savePost } from './store.js';
+import { loadState, savePost, saveState, upsertSubject } from './store.js';
 
 /**
  * 生成 → 整形 → 検査 → 画像 の一本道。
@@ -12,6 +12,7 @@ import { savePost } from './store.js';
 export async function buildPost(subject, { config = loadConfig(), provider, withImage = null, date = new Date() } = {}) {
   const { draft, meta } = await generateDraft(subject, { provider, config });
 
+  // 相談窓口を出す設定のときだけ付ける（config.safety.suicideFooter を空にすると付かない）
   if (subject.deathCategory === 'suicide' && config.safety.suicidePolicy === 'hedged' && config.safety.suicideFooter) {
     draft.footer = config.safety.suicideFooter;
   }
@@ -69,6 +70,33 @@ export function refreshPost(post, subject, { config = loadConfig(), rerender = t
     post.image = { path: renderCard(post, subject, { config }), generatedAt: new Date().toISOString() };
   }
   return savePost(post);
+}
+
+/**
+ * 投稿済みとして記録する。
+ * 手動投稿でも API 投稿でもここを通す。通さないと重複防止が効かない。
+ */
+export function markPosted(post, subject, { manual = false, url = null, tweetId = null } = {}) {
+  const at = new Date().toISOString();
+  post.status = 'posted';
+  post.publish = { manual, postedAt: at, url, tweetId: tweetId ?? extractTweetId(url) };
+  savePost(post);
+
+  const state = loadState();
+  state.postedSubjects = { ...(state.postedSubjects ?? {}), [post.subjectId]: at };
+  state.history = [
+    ...(state.history ?? []),
+    { postId: post.id, subjectId: post.subjectId, deathCategory: post.deathCategory, tweetId: post.publish.tweetId, at },
+  ];
+  saveState(state);
+
+  upsertSubject({ ...subject, status: 'used', lastPostedAt: at });
+  return post;
+}
+
+function extractTweetId(url) {
+  const m = String(url ?? '').match(/status\/(\d+)/);
+  return m ? m[1] : null;
 }
 
 export function sourceReplyFor(post, config = loadConfig()) {

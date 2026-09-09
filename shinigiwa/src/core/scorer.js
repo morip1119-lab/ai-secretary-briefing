@@ -35,10 +35,12 @@ export function scoreSubject(subject, { config = loadConfig(), state = null, now
   const bonus = config.scoring.categoryBonus[subject.deathCategory] ?? 0;
   score += bonus;
 
-  // 没後が浅い題材は炎上・遺族配慮のリスクが高いので減点しておく
+  // 記憶が新しい題材ほど反応が大きいので加点する。
+  // そのぶん事実誤認と遺族配慮のリスクも上がるので、guard 側で警告を出している。
   const yearsSinceDeath = subject.deathYear ? now.getFullYear() - subject.deathYear : 999;
-  if (yearsSinceDeath < config.scoring.recencyPenaltyYears) {
-    score -= (config.scoring.recencyPenaltyYears - yearsSinceDeath) * 1.5;
+  const bonusYears = config.scoring.recencyBonusYears ?? 0;
+  if (bonusYears && yearsSinceDeath < bonusYears) {
+    score += ((bonusYears - yearsSinceDeath) / bonusYears) * (config.scoring.recencyBonusMax ?? 0);
   }
 
   const st = state ?? loadState();
