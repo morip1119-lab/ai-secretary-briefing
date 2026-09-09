@@ -301,32 +301,43 @@ function renderDetail() {
 
   if (post.image && post.image.theme) $('themeSel').value = post.image.theme;
 
-  $('saveBtn').onclick = async () => {
+  $('saveBtn').onclick = guarded(async () => {
     await api('/api/posts/' + encodeURIComponent(post.id), { body: $('bodyInput').value });
     toast('保存しました');
-    await load();
-  };
-  $('imgBtn').onclick = async () => {
+  });
+  $('imgBtn').onclick = guarded(async () => {
     await api('/api/posts/' + encodeURIComponent(post.id) + '/image', { theme: $('themeSel').value });
     toast('画像を作り直しました');
-    await load();
-  };
-  $('approveBtn').onclick = async () => {
+  });
+  $('approveBtn').onclick = guarded(async () => {
     try {
       await api('/api/posts/' + encodeURIComponent(post.id) + '/approve', {});
       toast('承認しました');
     } catch (e) {
-      if (confirm(e.message + '\n\nそれでも承認しますか？')) {
-        await api('/api/posts/' + encodeURIComponent(post.id) + '/approve', { force: true });
-        toast('強制承認しました');
-      }
+      if (!confirm(e.message + '\n\nそれでも承認しますか？')) return;
+      await api('/api/posts/' + encodeURIComponent(post.id) + '/approve', { force: true });
+      toast('強制承認しました');
     }
-    await load();
-  };
-  $('rejectBtn').onclick = async () => {
+  });
+  $('rejectBtn').onclick = guarded(async () => {
     await api('/api/posts/' + encodeURIComponent(post.id) + '/reject', {});
     toast('却下しました');
-    await load();
+  });
+}
+
+/** 失敗を握りつぶさず必ず画面に出す。成功しても失敗しても一覧は取り直す。 */
+function guarded(fn) {
+  return async (event) => {
+    const btn = event && event.currentTarget;
+    if (btn) btn.disabled = true;
+    try {
+      await fn();
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      if (btn) btn.disabled = false;
+      await load().catch((e) => toast(e.message));
+    }
   };
 }
 

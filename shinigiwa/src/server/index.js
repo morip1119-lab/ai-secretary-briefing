@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env, loadConfig } from '../core/config.js';
-import { c, log } from '../core/logger.js';
+import { UserError, c, log } from '../core/logger.js';
 import { MEDIA_DIR } from '../core/paths.js';
 import { getPost, getSubject, listPosts, listSubjects, savePost } from '../core/store.js';
 import { rankSubjects } from '../core/scorer.js';
@@ -25,6 +25,8 @@ const MIME = {
 export function startServer({ port = env.reviewPort } = {}) {
   const server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
+      // 原稿ファイルを消したあとに古い画面から操作された場合など、原因が利用者側にあるものは 404 で返す
+      if (e instanceof UserError) return json(res, 404, { error: `${e.message}（画面を再読込してください）` });
       log.error(e.stack ?? e.message);
       json(res, 500, { error: e.message });
     });
