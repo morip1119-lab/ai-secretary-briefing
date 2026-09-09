@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+
+# 生成物（原稿・画像・実績ログ）はローカル管理
+data/posts/*.json
+data/media/
+data/state.json
+data/metrics.json
+
+# ダウンロードしたフォント
+assets/fonts/*.woff2
+assets/fonts/*.ttf
+assets/fonts/*.otf
+
+*.log
+.DS_Store
