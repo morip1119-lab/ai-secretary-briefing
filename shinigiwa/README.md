@@ -12,8 +12,20 @@ X（旧Twitter）で「頂点を極めた人物が、どう終わったのか」
 
 ## 1. まず動かす
 
+手元の PC（Windows / macOS）で使うなら **[docs/LOCAL.md](docs/LOCAL.md)** の手順が早い。
+`start.bat`（mac は `start.command`）をダブルクリックするだけで、
+依存のインストール・フォント取得・`.env` の用意まで済ませてブラウザが開く。
+
+ターミナルから使う場合は次の通り。
+
 ```bash
 cd shinigiwa
+npm start                    # 上と同じ。準備してレビュー画面を開く
+```
+
+一つずつやるなら。
+
+```bash
 npm install
 npm run setup:fonts          # 画像カード用の日本語フォントを取得
 cp .env.example .env         # LLM の API キーを入れる
@@ -37,8 +49,10 @@ node src/cli.js queue                # 投稿時刻を割り当て
 node src/cli.js export               # 本文.txt と画像.png を書き出す
 ```
 
-`review` を叩くと http://localhost:4321 が立ち上がる。左に原稿一覧、右に X 風のプレビューと安全チェックの結果が出る。
+`review` を叩くと http://localhost:4321 が立ち上がり、既定のブラウザで開く。
+左に原稿一覧、右に X 風のプレビューと安全チェックの結果が出る。
 本文と出典はボタン一発でクリップボードにコピーでき、画像もその場で保存できる。
+ブラウザを開かせたくないときは `--no-open`、ポートを変えるときは `--port 4322`。
 
 ---
 
