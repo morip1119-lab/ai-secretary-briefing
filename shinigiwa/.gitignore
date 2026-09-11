@@ -6,6 +6,9 @@ node_modules/
 data/media/
 data/export/
 
+# update スクリプトが「設定が変わりました」と置いていく比較用ファイル
+config/config.json.new
+
 # 原稿・投稿履歴・実績は追跡する（GitHub Actions で自動投稿するときに状態が必要になる）
 # ローカルだけで運用したい場合は下 3 行のコメントを外す
 # data/posts/*.json

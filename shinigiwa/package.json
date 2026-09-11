@@ -8,6 +8,8 @@
     "shinigiwa": "./src/cli.js"
   },
   "scripts": {
+    "start": "node scripts/start.mjs",
+    "update": "node scripts/update.mjs",
     "shinigiwa": "node src/cli.js",
     "setup:fonts": "node scripts/setup-fonts.mjs",
     "review": "node src/cli.js review",
