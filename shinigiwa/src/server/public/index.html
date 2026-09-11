@@ -259,7 +259,7 @@ function renderDetail() {
             <textarea id="bodyInput">${escapeHtml(post.body)}</textarea>
             <div class="actions">
               <button class="primary" id="saveBtn">保存して再チェック</button>
-              <button id="imgBtn">画像を作り直す</button>
+              <button id="imgBtn">${post.imageUrl ? '画像を作り直す' : '画像を作る'}</button>
               <select id="themeSel" style="background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px">
                 <option value="noir">noir</option>
                 <option value="ash">ash</option>
