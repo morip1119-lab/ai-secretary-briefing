@@ -1,0 +1,26 @@
+{
+  "name": "shinigiwa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "死に際チャンネル - X(Twitter)向け 半自動コンテンツ運用システム",
+  "type": "module",
+  "bin": {
+    "shinigiwa": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node scripts/start.mjs",
+    "update": "node scripts/update.mjs",
+    "shinigiwa": "node src/cli.js",
+    "setup:fonts": "node scripts/setup-fonts.mjs",
+    "review": "node src/cli.js review",
+    "doctor": "node src/cli.js doctor",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "twitter-api-v2": "^1.29.1"
+  }
+}

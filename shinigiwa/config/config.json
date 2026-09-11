@@ -1,0 +1,104 @@
+{
+  "channel": {
+    "name": "死に際チャンネル",
+    "handle": "@shinigiwa_ch",
+    "tagline": "人は、人生の最後に何を思うのか"
+  },
+
+  "posting": {
+    "mode": "manual",
+    "postsPerDay": 3,
+    "maxPostsPerDay": 5,
+    "timezone": "Asia/Tokyo",
+    "slots": ["07:30", "12:15", "19:00", "21:30", "22:45"],
+    "jitterMinutes": 7,
+    "attachImage": true,
+    "allowUrlInBody": false,
+    "sourceReply": true,
+    "sourceReplyIncludeUrls": false,
+    "charLimit": 3000,
+    "charLimitMode": "premium",
+    "minGapDaysSameSubject": 180,
+    "minGapDaysSameCategory": 3,
+    "autoApprove": false,
+    "autoApproveRequiresNoWarnings": true,
+    "queueBufferDays": 2
+  },
+
+  "editorial": {
+    "badges": ["悲劇", "衝撃", "栄光と転落", "実話"],
+    "sectionHeadPrefix": "▼",
+    "bulletPrefix": "・",
+    "leadLines": 2,
+    "sectionCount": [3, 4],
+    "bulletsPerSection": [2, 3],
+    "closingLine": true,
+    "hashtags": [],
+    "originalTake": true,
+    "originalTakeHeading": "▼この話が刺さる理由"
+  },
+
+  "safety": {
+    "minYearsSinceDeath": 0,
+    "recentDeathWarnYears": 7,
+    "blockLivingPeople": true,
+    "requireSources": 1,
+    "suicidePolicy": "hedged",
+    "suicideFooter": "",
+    "requireHedgeForUnconfirmedCause": true,
+    "checkNumberConsistency": true,
+    "bannedPhrases": [
+      "確実に",
+      "絶対に",
+      "殺された",
+      "犯人は",
+      "隠蔽した",
+      "真犯人"
+    ],
+    "methodDetailPatterns": [
+      "首を吊",
+      "飛び降り",
+      "飛び込み",
+      "手首を",
+      "練炭",
+      "ガス自殺",
+      "服毒",
+      "口径",
+      "頭部を撃"
+    ]
+  },
+
+  "image": {
+    "enabled": true,
+    "width": 1200,
+    "height": 675,
+    "theme": "noir",
+    "cardType": "hook",
+    "footerText": "死に際チャンネル  @shinigiwa_ch",
+    "showSourceNote": true
+  },
+
+  "scoring": {
+    "weights": {
+      "fame": 1.0,
+      "fallDepth": 1.2,
+      "jpRecognition": 1.1,
+      "gapSurprise": 1.3,
+      "storyClarity": 0.8
+    },
+    "categoryBonus": {
+      "overdose": 6,
+      "suicide": 5,
+      "solitary": 7,
+      "poverty": 7,
+      "murder": 5,
+      "accident": 3,
+      "illness": 2,
+      "execution": 6,
+      "scandal": 4
+    },
+    "recencyBonusYears": 20,
+    "recencyBonusMax": 15,
+    "usedPenalty": 40
+  }
+}

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>死に際チャンネル ｜ 原稿レビュー</title>
+<style>
+  :root {
+    --bg: #0b0c0e;
+    --panel: #131519;
+    --panel-2: #191c21;
+    --line: #262a31;
+    --text: #e8e6e3;
+    --muted: #8b9199;
+    --accent: #c0392b;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --ng: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+    font-size: 14px; line-height: 1.7;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 22px; border-bottom: 1px solid var(--line); background: var(--panel);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 15px; margin: 0; letter-spacing: .04em; }
+  header h1 span { color: var(--accent); }
+  .pill { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.live { border-color: var(--ng); color: var(--ng); }
+  .pill.dry { border-color: var(--warn); color: var(--warn); }
+  .spacer { flex: 1; }
+  button {
+    font: inherit; font-size: 13px; cursor: pointer; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+    padding: 7px 14px; transition: .15s;
+  }
+  button:hover:not(:disabled) { background: #232830; border-color: #3a414b; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: #d4462f; }
+  button.ghost { background: transparent; }
+
+  main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 57px); }
+  aside { border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto; max-height: calc(100vh - 57px); }
+  .aside-head { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--muted); }
+  .tab.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .item { padding: 12px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .item:hover { background: var(--panel-2); }
+  .item.on { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
+  .item .name { font-size: 13px; font-weight: 600; }
+  .item .sub { font-size: 11px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .dot.draft { background: var(--muted); }
+  .dot.approved { background: var(--ok); }
+  .dot.scheduled { background: #58a6ff; }
+  .dot.posted { background: #a371f7; }
+  .dot.rejected { background: var(--ng); }
+
+  section.detail { padding: 24px 28px; overflow-y: auto; max-height: calc(100vh - 57px); }
+  .grid { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 24px; align-items: start; }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } main { grid-template-columns: 260px 1fr; } }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .card h2 { font-size: 12px; letter-spacing: .08em; color: var(--muted); margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .card .body { padding: 16px; }
+
+  .tweet { background: #16181c; border-radius: 14px; padding: 18px; border: 1px solid var(--line); }
+  .tweet .who { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .tweet .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#3a0d0d,#1a1a1e); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .tweet .handle { font-size: 12px; color: var(--muted); }
+  .tweet pre {
+    margin: 0; white-space: pre-wrap; word-break: break-word;
+    font: inherit; font-size: 15px; line-height: 1.75;
+  }
+  .tweet img { width: 100%; border-radius: 12px; margin-top: 14px; display: block; border: 1px solid var(--line); }
+
+  textarea {
+    width: 100%; min-height: 380px; background: #0e1013; color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 14px;
+    font: 13px/1.8 ui-monospace, "SF Mono", Menlo, monospace; resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: #3a414b; }
+
+  .msg { font-size: 12px; padding: 8px 12px; border-radius: 7px; margin-bottom: 8px; line-height: 1.6; }
+  .msg.ng { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); color: #ffb4ae; }
+  .msg.warn { background: rgba(210,153,34,.1); border: 1px solid rgba(210,153,34,.3); color: #e8c37a; }
+  .msg.ok { background: rgba(63,185,80,.08); border: 1px solid rgba(63,185,80,.25); color: #8ce39a; }
+
+  .kv { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+  .kv:last-child { border: none; }
+  .kv span:first-child { color: var(--muted); }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .empty { color: var(--muted); text-align: center; padding: 80px 20px; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel-2); border: 1px solid var(--line); padding: 10px 20px;
+    border-radius: 8px; font-size: 13px; opacity: 0; transition: .25s; pointer-events: none;
+  }
+  .toast.on { opacity: 1; }
+  .score { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>死に際</span>チャンネル ／ 原稿レビュー</h1>
+  <span class="pill" id="providerPill">-</span>
+  <span class="pill" id="modePill">-</span>
+  <div class="spacer"></div>
+  <button id="genBtn">原稿を生成</button>
+  <button class="ghost" id="reloadBtn">再読込</button>
+</header>
+
+<main>
+  <aside>
+    <div class="aside-head" id="tabs"></div>
+    <div id="list"></div>
+  </aside>
+
+  <section class="detail" id="detail">
+    <div class="empty">左のリストから原稿を選んでください</div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATUSES = [
+  { key: 'draft', label: '下書き' },
+  { key: 'approved', label: '承認済' },
+  { key: 'scheduled', label: '予約済' },
+  { key: 'posted', label: '投稿済' },
+  { key: 'rejected', label: '却下' },
+];
+
+let state = { posts: [], subjects: [], config: null };
+let filter = 'draft';
+let selectedId = null;
+
+const $ = (id) => document.getElementById(id);
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('on'), 2200);
+}
+
+async function api(path, options) {
+  // サーバーを止めたまま操作するとボタンが無言で固まるので、必ず打ち切って理由を出す
+  const timeout = AbortSignal.timeout(60000);
+  let res;
+  try {
+    res = await fetch(path, {
+      method: options ? 'POST' : 'GET',
+      headers: { 'content-type': 'application/json' },
+      body: options ? JSON.stringify(options) : undefined,
+      signal: timeout,
+    });
+  } catch (e) {
+    if (e.name === 'TimeoutError') throw new Error('応答がありません。サーバーが止まっていないか確認してください。');
+    throw new Error('サーバーに接続できません。node src/cli.js review が動いているか確認してください。');
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'エラーが発生しました');
+  return data;
+}
+
+async function load() {
+  state = await api('/api/state');
+  $('providerPill').textContent = '生成: ' + state.provider;
+  $('modePill').textContent = state.dryRun ? 'DRY RUN' : '本番投稿ON';
+  $('modePill').className = 'pill ' + (state.dryRun ? 'dry' : 'live');
+  renderTabs();
+  renderList();
+  renderDetail();
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = STATUSES.map((s) => {
+    const n = state.posts.filter((p) => p.status === s.key).length;
+    return `<button class="tab ${filter === s.key ? 'on' : ''}" data-tab="${s.key}">${s.label} ${n}</button>`;
+  }).join('');
+  document.querySelectorAll('[data-tab]').forEach((el) => {
+    el.onclick = () => { filter = el.dataset.tab; renderTabs(); renderList(); };
+  });
+}
+
+function renderList() {
+  const posts = state.posts.filter((p) => p.status === filter).reverse();
+  if (!posts.length) {
+    $('list').innerHTML = '<div class="empty" style="padding:40px 16px;font-size:12px">この状態の原稿はありません</div>';
+    return;
+  }
+  $('list').innerHTML = posts.map((p) => `
+    <div class="item ${p.id === selectedId ? 'on' : ''}" data-id="${p.id}">
+      <div class="name"><span class="dot ${p.status}"></span>${escapeHtml(p.subjectName || p.subjectId)}</div>
+      <div class="sub">${escapeHtml((p.draft && p.draft.hook) || '')}</div>
+      <div class="sub">${p.stats.weighted}字相当 ${guardBadge(p)}</div>
+    </div>
+  `).join('');
+  document.querySelectorAll('[data-id]').forEach((el) => {
+    el.onclick = () => { selectedId = el.dataset.id; renderList(); renderDetail(); };
+  });
+}
+
+function guardBadge(p) {
+  if (!p.guard) return '';
+  if (!p.guard.ok) return '· <span style="color:var(--ng)">NG ' + p.guard.errors.length + '</span>';
+  if (p.guard.warnings.length) return '· <span style="color:var(--warn)">要確認 ' + p.guard.warnings.length + '</span>';
+  return '· <span style="color:var(--ok)">OK</span>';
+}
+
+function renderDetail() {
+  const post = state.posts.find((p) => p.id === selectedId);
+  if (!post) {
+    $('detail').innerHTML = '<div class="empty">左のリストから原稿を選んでください</div>';
+    return;
+  }
+  const g = post.guard || { errors: [], warnings: [], ok: true };
+  const ch = state.config.channel;
+  const isManual = state.config.posting.mode === 'manual';
+
+  $('detail').innerHTML = `
+    <div class="grid">
+      <div>
+        <div class="card" style="margin-bottom:18px">
+          <h2>プレビュー</h2>
+          <div class="body">
+            <div class="tweet">
+              <div class="who">
+                <div class="avatar">墓</div>
+                <div>
+                  <div style="font-weight:700">${escapeHtml(ch.name)}</div>
+                  <div class="handle">${escapeHtml(ch.handle)}</div>
+                </div>
+              </div>
+              <pre>${escapeHtml(post.body)}</pre>
+              ${post.imageUrl ? `<img src="${post.imageUrl}" alt="card">` : ''}
+            </div>
+            ${post.sourceReply ? `<div style="margin-top:12px;padding-left:24px;border-left:2px solid var(--line)">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px">↳ 出典リプライ（自動）</div>
+              <pre style="margin:0;white-space:pre-wrap;font:inherit;font-size:12px;color:var(--muted)">${escapeHtml(post.sourceReply)}</pre>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>本文を編集</h2>
+          <div class="body">
+            <textarea id="bodyInput">${escapeHtml(post.body)}</textarea>
+            <div class="actions">
+              <button class="primary" id="saveBtn">保存して再チェック</button>
+              <button id="imgBtn">画像を作り直す</button>
+              <select id="themeSel" style="background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px">
+                <option value="noir">noir</option>
+                <option value="ash">ash</option>
+                <option value="sepia">sepia</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:18px">
+          <h2>チェック結果</h2>
+          <div class="body">
+            ${g.errors.map((e) => `<div class="msg ng">NG ${escapeHtml(e)}</div>`).join('')}
+            ${g.warnings.map((w) => `<div class="msg warn">要確認 ${escapeHtml(w)}</div>`).join('')}
+            ${g.ok && !g.warnings.length ? '<div class="msg ok">問題なし</div>' : ''}
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <h2>情報</h2>
+          <div class="body">
+            <div class="kv"><span>人物</span><span>${escapeHtml(post.subjectName || '')}</span></div>
+            <div class="kv"><span>カテゴリ</span><span>${escapeHtml(post.deathCategory || '-')}</span></div>
+            <div class="kv"><span>文字数</span><span>${post.stats.weighted} / ${state.config.posting.charLimit}</span></div>
+            <div class="kv"><span>生成</span><span>${escapeHtml((post.generator && post.generator.provider) || '-')}</span></div>
+            <div class="kv"><span>状態</span><span>${escapeHtml(post.status)}</span></div>
+            ${post.schedule ? `<div class="kv"><span>投稿予定</span><span>${new Date(post.schedule.at).toLocaleString('ja-JP')}</span></div>` : ''}
+            ${post.publish && post.publish.url ? `<div class="kv"><span>URL</span><a href="${post.publish.url}" target="_blank" style="color:#58a6ff">開く</a></div>` : ''}
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <h2>判定</h2>
+          <div class="body">
+            <div class="actions">
+              <button class="primary" id="approveBtn" ${post.status !== 'draft' ? 'disabled' : ''}>承認する</button>
+              <button id="rejectBtn" ${post.status === 'posted' ? 'disabled' : ''}>却下</button>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:10px">
+              承認後は  node src/cli.js queue  で投稿枠に割り当てられます。
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>X に貼る</h2>
+          <div class="body">
+            <div class="actions">
+              <button id="copyBtn">本文をコピー</button>
+              ${post.sourceReply ? '<button id="copyReplyBtn">出典をコピー</button>' : ''}
+              ${post.imageUrl ? `<a href="${post.imageUrl}" download="${escapeHtml(post.id)}.png"><button>画像を保存</button></a>` : ''}
+            </div>
+            ${isManual && post.status !== 'posted' && post.status !== 'draft' ? `
+            <div class="actions">
+              <input id="postedUrl" placeholder="投稿URL（任意）" style="flex:1;min-width:160px;background:#0e1013;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font:inherit;font-size:12px">
+              <button class="primary" id="postedBtn">投稿した</button>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:10px">
+              「投稿した」を押さないと、同じ人物が再び候補に出てきます。
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (post.image && post.image.theme) $('themeSel').value = post.image.theme;
+
+  $('saveBtn').onclick = guarded(async () => {
+    await api('/api/posts/' + encodeURIComponent(post.id), { body: $('bodyInput').value });
+    toast('保存しました');
+  });
+  $('imgBtn').onclick = guarded(async () => {
+    await api('/api/posts/' + encodeURIComponent(post.id) + '/image', { theme: $('themeSel').value });
+    toast('画像を作り直しました');
+  });
+  $('approveBtn').onclick = guarded(async () => {
+    try {
+      await api('/api/posts/' + encodeURIComponent(post.id) + '/approve', {});
+      toast('承認しました');
+    } catch (e) {
+      if (!confirm(e.message + '\n\nそれでも承認しますか？')) return;
+      await api('/api/posts/' + encodeURIComponent(post.id) + '/approve', { force: true });
+      toast('強制承認しました');
+    }
+  });
+  $('rejectBtn').onclick = guarded(async () => {
+    await api('/api/posts/' + encodeURIComponent(post.id) + '/reject', {});
+    toast('却下しました');
+  });
+  $('copyBtn').onclick = () => copyText(post.body, '本文をコピーしました');
+  if ($('copyReplyBtn')) $('copyReplyBtn').onclick = () => copyText(post.sourceReply, '出典をコピーしました');
+  if ($('postedBtn')) {
+    $('postedBtn').onclick = guarded(async () => {
+      await api('/api/posts/' + encodeURIComponent(post.id) + '/posted', { url: $('postedUrl').value || null });
+      toast('投稿済みとして記録しました');
+    });
+  }
+}
+
+async function copyText(text, message) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(message);
+  } catch {
+    // クリップボード API が使えない環境向けのフォールバック
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast(message);
+  }
+}
+
+/** 失敗を握りつぶさず必ず画面に出す。成功しても失敗しても一覧は取り直す。 */
+function guarded(fn) {
+  return async (event) => {
+    const btn = event && event.currentTarget;
+    if (btn) btn.disabled = true;
+    try {
+      await fn();
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      if (btn) btn.disabled = false;
+      await load().catch((e) => toast(e.message));
+    }
+  };
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[ch]);
+}
+
+$('genBtn').onclick = async () => {
+  $('genBtn').disabled = true;
+  $('genBtn').textContent = '生成中…';
+  try {
+    const { created } = await api('/api/generate', { count: 1 });
+    if (created.length) { selectedId = created[0].id; filter = 'draft'; }
+    toast(created.length ? '原稿を生成しました' : '生成できるネタがありません');
+    await load();
+  } catch (e) {
+    toast(e.message);
+  } finally {
+    $('genBtn').disabled = false;
+    $('genBtn').textContent = '原稿を生成';
+  }
+};
+$('reloadBtn').onclick = () => load();
+
+load();
+</script>
+</body>
+</html>
