@@ -37,7 +37,7 @@ console.log('');
 
 try {
   const source = await download(branch);
-  const changed = apply(source);
+  const { changed, notes } = apply(source);
 
   console.log('');
   if (changed.length === 0) {
@@ -49,6 +49,7 @@ try {
     console.log('');
     console.log(c.dim('  start.bat を起動し直すと反映されます'));
   }
+  for (const note of notes) console.log(`  ${c.yellow('!')} ${note}`);
   console.log('');
 } catch (e) {
   console.log('');
@@ -104,6 +105,7 @@ function extract(zip, dest) {
 
 function apply(source) {
   const changed = [];
+  const notes = [];
 
   for (const dir of SYNC_DIRS) {
     syncDir(path.join(source, dir), path.join(ROOT, dir), dir, changed);
@@ -113,9 +115,9 @@ function apply(source) {
   }
 
   mergeSubjects(path.join(source, 'data', 'subjects.json'), changed);
-  offerConfig(path.join(source, 'config', 'config.json'), changed);
+  offerConfig(path.join(source, 'config', 'config.json'), changed, notes);
 
-  return changed;
+  return { changed, notes };
 }
 
 /** src にあるものを dest に反映し、src から消えたものは dest からも消す */
@@ -171,7 +173,7 @@ function mergeSubjects(src, changed) {
 }
 
 /** 運用方針は手元で調整している可能性が高いので、勝手に上書きしない */
-function offerConfig(src, changed) {
+function offerConfig(src, changed, notes) {
   if (!fs.existsSync(src)) return;
   const dest = path.join(ROOT, 'config', 'config.json');
   if (!fs.existsSync(dest)) {
@@ -180,9 +182,17 @@ function offerConfig(src, changed) {
     changed.push('config/config.json');
     return;
   }
-  if (fs.readFileSync(src).equals(fs.readFileSync(dest))) return;
+  if (fs.readFileSync(src).equals(fs.readFileSync(dest))) {
+    fs.rmSync(`${dest}.new`, { force: true });
+    return;
+  }
 
   const next = `${dest}.new`;
+  // 前回置いたものと同じなら「また更新があった」とは言わず、未処理であることだけ伝える
+  if (fs.existsSync(next) && fs.readFileSync(src).equals(fs.readFileSync(next))) {
+    notes.push('config/config.json.new が未処理のままです（中身を見比べて、必要なら差し替えてください）');
+    return;
+  }
   fs.copyFileSync(src, next);
   changed.push('config/config.json.new（設定が変わっています。中身を見比べて必要なら差し替えてください）');
 }
