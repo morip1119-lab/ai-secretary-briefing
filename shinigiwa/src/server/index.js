@@ -1,6 +1,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { env, loadConfig } from '../core/config.js';
 import { UserError, c, log } from '../core/logger.js';
@@ -22,7 +23,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
 };
 
-export function startServer({ port = env.reviewPort } = {}) {
+export function startServer({ port = env.reviewPort, open = false } = {}) {
   const server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
       // 原稿ファイルを消したあとに古い画面から操作された場合など、原因が利用者側にあるものは 404 で返す
@@ -32,14 +33,48 @@ export function startServer({ port = env.reviewPort } = {}) {
     });
   });
 
-  server.listen(port, () => {
-    log.blank();
-    log.ok(`レビュー画面: ${c.cyan(`http://localhost:${port}`)}`);
-    log.info(c.dim('  Ctrl+C で終了'));
-    log.blank();
-  });
+  return new Promise((resolve, reject) => {
+    server.once('error', (e) => {
+      if (e.code !== 'EADDRINUSE') return reject(e);
+      reject(
+        new UserError(
+          [
+            `ポート ${port} はすでに使われています。`,
+            '  別のウィンドウで起動済みなら、そちらのブラウザをそのまま使ってください。',
+            `  同時に動かしたい場合は  node src/cli.js review --port ${port + 1}`,
+          ].join('\n'),
+        ),
+      );
+    });
 
-  return server;
+    server.listen(port, '127.0.0.1', () => {
+      const url = `http://localhost:${port}`;
+      log.blank();
+      log.ok(`レビュー画面: ${c.cyan(url)}`);
+      log.info(c.dim('  ブラウザが開かない場合は、上の URL をコピーして開いてください'));
+      log.info(c.dim('  終了するときは Ctrl+C（この画面を閉じても止まります）'));
+      log.blank();
+      if (open) openBrowser(url);
+      resolve(server);
+    });
+  });
+}
+
+/** 既定のブラウザで開く。開けなくても運用はできるので失敗は無視する。 */
+function openBrowser(url) {
+  const [cmd, args] =
+    process.platform === 'win32'
+      ? ['cmd', ['/c', 'start', '', url]]
+      : process.platform === 'darwin'
+        ? ['open', [url]]
+        : ['xdg-open', [url]];
+  try {
+    const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
+    child.on('error', () => {});
+    child.unref();
+  } catch {
+    /* ブラウザが開けないだけなので握りつぶす */
+  }
 }
 
 async function handle(req, res) {

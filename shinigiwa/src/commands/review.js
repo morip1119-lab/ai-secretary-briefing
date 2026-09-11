@@ -1,6 +1,9 @@
 import { startServer } from '../server/index.js';
 
 export async function run({ flags }) {
-  startServer({ port: flags.port ? Number(flags.port) : undefined });
+  await startServer({
+    port: flags.port ? Number(flags.port) : undefined,
+    open: flags.noOpen !== true,
+  });
   await new Promise(() => {});
 }
