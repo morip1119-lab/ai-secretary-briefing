@@ -23,6 +23,8 @@ const DEFAULT_BRANCH = 'master';
 const SYNC_DIRS = ['src', 'scripts', 'test', 'docs'];
 /** 単体で上書きするファイル */
 const SYNC_FILES = ['package.json', 'package-lock.json', 'README.md', '.env.example', 'start.bat', 'start.command', 'update.bat'];
+/** ネタ台帳のうち、手元の値を必ず残すキー（投稿の実績） */
+const SUBJECT_STATE_KEYS = ['status', 'lastPostedAt'];
 
 const c = process.stdout.isTTY
   ? { dim: (s) => `\u001b[2m${s}\u001b[0m`, bold: (s) => `\u001b[1m${s}\u001b[0m`, cyan: (s) => `\u001b[36m${s}\u001b[0m`, yellow: (s) => `\u001b[33m${s}\u001b[0m`, red: (s) => `\u001b[31m${s}\u001b[0m`, green: (s) => `\u001b[32m${s}\u001b[0m` }
@@ -151,8 +153,6 @@ function copyIfChanged(from, to, label, changed) {
  * ネタ台帳は、中身（事実・構成）は上流が正で、実績（投稿済みかどうか）は手元が正。
  * 上流の加筆を取り込みつつ、投稿履歴だけは必ず手元のものを残す。
  */
-const SUBJECT_STATE_KEYS = ['status', 'lastPostedAt'];
-
 function mergeSubjects(src, changed) {
   if (!fs.existsSync(src)) return;
   const dest = path.join(ROOT, 'data', 'subjects.json');
