@@ -1,8 +1,8 @@
 {
   "channel": {
     "name": "死に際チャンネル",
-    "handle": "@your_account",
-    "tagline": "頂点を極めた人間は、どう終わったのか。"
+    "handle": "@shinigiwa_ch",
+    "tagline": "人は、人生の最後に何を思うのか"
   },
 
   "posting": {
@@ -74,7 +74,7 @@
     "height": 675,
     "theme": "noir",
     "cardType": "hook",
-    "footerText": "死に際チャンネル",
+    "footerText": "死に際チャンネル  @shinigiwa_ch",
     "showSourceNote": true
   },
 
