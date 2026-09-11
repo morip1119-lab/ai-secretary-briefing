@@ -148,9 +148,11 @@ function copyIfChanged(from, to, label, changed) {
 }
 
 /**
- * ネタ台帳は「使用済み」などの実績がローカルにしかないので上書きできない。
- * 手元にない id だけを足す。
+ * ネタ台帳は、中身（事実・構成）は上流が正で、実績（投稿済みかどうか）は手元が正。
+ * 上流の加筆を取り込みつつ、投稿履歴だけは必ず手元のものを残す。
  */
+const SUBJECT_STATE_KEYS = ['status', 'lastPostedAt'];
+
 function mergeSubjects(src, changed) {
   if (!fs.existsSync(src)) return;
   const dest = path.join(ROOT, 'data', 'subjects.json');
@@ -164,12 +166,33 @@ function mergeSubjects(src, changed) {
   }
 
   const local = JSON.parse(fs.readFileSync(dest, 'utf8')).subjects ?? [];
-  const known = new Set(local.map((s) => s.id));
-  const added = incoming.filter((s) => !known.has(s.id));
-  if (added.length === 0) return;
+  const byId = new Map(local.map((s) => [s.id, s]));
+  const added = [];
+  const revised = [];
 
-  fs.writeFileSync(dest, `${JSON.stringify({ subjects: [...local, ...added] }, null, 2)}\n`, 'utf8');
-  changed.push(`ネタ台帳に ${added.length} 件追加（${added.map((s) => s.name).join('、')}）`);
+  const merged = incoming.map((next) => {
+    const mine = byId.get(next.id);
+    if (!mine) {
+      added.push(next);
+      return next;
+    }
+    byId.delete(next.id);
+    const state = Object.fromEntries(
+      SUBJECT_STATE_KEYS.filter((k) => mine[k] !== undefined).map((k) => [k, mine[k]]),
+    );
+    const result = { ...next, ...state };
+    if (JSON.stringify(result) !== JSON.stringify(mine)) revised.push(next.name ?? next.id);
+    return result;
+  });
+
+  // 上流から消えた（＝手元で足した）ネタは残す
+  const localOnly = [...byId.values()];
+  const subjects = [...merged, ...localOnly];
+
+  if (!added.length && !revised.length) return;
+  fs.writeFileSync(dest, `${JSON.stringify({ subjects }, null, 2)}\n`, 'utf8');
+  if (added.length) changed.push(`ネタ台帳に ${added.length} 件追加（${added.map((s) => s.name).join('、')}）`);
+  if (revised.length) changed.push(`ネタ台帳の ${revised.length} 件を更新（${revised.join('、')}）`);
 }
 
 /** 運用方針は手元で調整している可能性が高いので、勝手に上書きしない */
