@@ -34,8 +34,25 @@
     "bulletsPerSection": [2, 3],
     "closingLine": true,
     "hashtags": [],
-    "originalTake": true,
-    "originalTakeHeading": "▼この話が刺さる理由"
+    "originalTake": false,
+    "originalTakeHeading": "▼この話が刺さる理由",
+    "requireNameInLead": true,
+    "minNumericBulletRatio": 0.5,
+    "vagueWords": [
+      "壊れていた",
+      "壊れ続け",
+      "壊れていく",
+      "苦しんでいた",
+      "苦しみ続け",
+      "転落していった",
+      "闇を抱え",
+      "心を病み",
+      "波乱の",
+      "満たされない",
+      "ボロボロ",
+      "荒れた生活",
+      "どん底"
+    ]
   },
 
   "safety": {

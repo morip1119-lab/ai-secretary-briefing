@@ -66,7 +66,7 @@ export function inspect(post, subject, { config = loadConfig(), state = null, no
   }
 
   /* ---- LLM が数字を捏造していないか ---- */
-  if (s.checkNumberConsistency && subject) warnings.push(...checkNumbers(body, subject));
+  if (s.checkNumberConsistency && subject) warnings.push(...checkNumbers(body, subject, now));
 
   /* ---- 名誉毀損・断定リスク ---- */
   for (const p of s.bannedPhrases ?? []) {
@@ -95,10 +95,41 @@ export function inspect(post, subject, { config = loadConfig(), state = null, no
   }
 
   /* ---- 原稿の質 ---- */
+  const ed = config.editorial;
   const sections = post.draft?.sections ?? [];
   if (sections.length < 2) warnings.push('セクションが 2 つ未満です。物語の起伏が足りない可能性があります。');
   if (!post.draft?.hook || weightedLength(post.draft.hook) < 30) {
     warnings.push('フック（1行目）が短すぎます。ここでスクロールを止められるかが全てです。');
+  }
+
+  /* ---- 誰の話なのかが冒頭で分かるか ---- */
+  if (ed.requireNameInLead && subject?.name && !namedEarly(body, subject)) {
+    errors.push(
+      `冒頭（フックとリード）に「${subject.name}」の名前がありません。` +
+        '誰の話か分からないまま読み進めてはもらえないので、リードの2文目までに必ず名前を出してください。',
+    );
+  }
+
+  /* ---- 抽象語でごまかしていないか ---- */
+  const vague = (ed.vagueWords ?? []).filter((w) => body.includes(w));
+  if (vague.length) {
+    warnings.push(
+      `状態をまとめただけの抽象語が入っています: 「${vague.join('」「')}」。` +
+        '何がどれだけ起きたのか、数字や出来事に置き換えてください。',
+    );
+  }
+
+  /* ---- 具体的な数字が入っているか ---- */
+  const bullets = sections.flatMap((s) => s.bullets ?? []);
+  const ratio = ed.minNumericBulletRatio ?? 0;
+  if (ratio > 0 && bullets.length) {
+    const withNumber = bullets.filter((b) => /[0-9０-９]/.test(String(b))).length;
+    if (withNumber / bullets.length < ratio) {
+      warnings.push(
+        `具体的な数字が入っている箇条書きが ${withNumber}/${bullets.length} 件しかありません。` +
+          '年・金額・回数・期間・体重など、読者が映像を思い浮かべられる数字を足してください。',
+      );
+    }
   }
   if (!/最期|最後|幕切れ|死|享年/.test(body)) {
     warnings.push('「最期」に触れている記述が見当たりません。チャンネルの軸がぼけていないか確認してください。');
@@ -111,18 +142,33 @@ export function inspect(post, subject, { config = loadConfig(), state = null, no
 }
 
 /**
+ * フックとリード（本文の最初の2ブロック）で人物が名指しされているか。
+ * 本文を手で編集されていても効くように、draft ではなく本文を見る。
+ */
+function namedEarly(body, subject) {
+  const opening = body.split('\n\n').slice(0, 2).join('\n');
+  const candidates = [subject.name, subject.nameEn, subject.name?.split('・').pop()].filter(
+    (n) => n && [...n].length >= 2,
+  );
+  return candidates.some((n) => opening.includes(n));
+}
+
+/**
  * 本文に出てくる年号・年齢が台帳と矛盾していないかを見る。
  * LLM に書かせると数字だけが静かに間違っていることがあり、これが一番見落としやすい。
  */
-function checkNumbers(body, subject) {
+function checkNumbers(body, subject, now = new Date()) {
   const out = [];
   const { birthYear, deathYear, ageAtDeath } = subject;
 
   if (birthYear && deathYear) {
+    // 没後に起きた出来事（裁判・再評価など）は正当に書けるので、
+    // 咎めるのは「生まれる前」と「未来」だけにする。
+    const thisYear = now.getFullYear();
     const years = [...body.matchAll(/(1[5-9]\d{2}|20\d{2})\s*年/g)].map((m) => Number(m[1]));
-    const strays = [...new Set(years)].filter((y) => y < birthYear || y > deathYear);
+    const strays = [...new Set(years)].filter((y) => y < birthYear || y > thisYear);
     if (strays.length) {
-      out.push(`本文の年号 ${strays.join(', ')} が生没年（${birthYear}–${deathYear}）の外側です。事実誤認の可能性があります。`);
+      out.push(`本文の年号 ${strays.join(', ')} が生年 ${birthYear} より前か、未来の年です。事実誤認の可能性があります。`);
     }
   }
 

@@ -27,9 +27,9 @@ const subject = {
 const draft = {
   badge: '悲劇',
   hook: '頂点を極めた男が最後にたどり着いたのは、誰もいない部屋だった',
-  lead: '導入の一文。',
+  lead: '1975年、ある大会が開かれた。\nそこで優勝したテスト太郎。彼は、その後の15年で全てを失う。',
   sections: [
-    { title: '栄光', bullets: ['一番になった', '世界に名が知られた'] },
+    { title: '栄光', bullets: ['1975年に一番になった', '3年で世界に名が知られた'] },
     { title: 'あまりに静かな最期', bullets: ['1990年に50歳で死去した'] },
   ],
   take: '独自の視点。',
@@ -61,15 +61,27 @@ test('URL の検出と省略', () => {
 test('本文が参考フォーマットどおりに組み上がる', () => {
   const body = renderBody(draft, config);
   assert.ok(body.startsWith('【悲劇】頂点を極めた男'), body.slice(0, 30));
-  assert.ok(body.includes('\n▼栄光\n・一番になった\n・世界に名が知られた'));
-  assert.ok(body.includes('▼この話が刺さる理由'));
+  assert.ok(body.includes('\n▼栄光\n・1975年に一番になった\n・3年で世界に名が知られた'));
   assert.ok(body.endsWith('締めの一文。'));
+});
+
+test('独自解釈のセクションは既定では入れない', () => {
+  assert.equal(config.editorial.originalTake, false);
+  assert.ok(!renderBody(draft, config).includes('▼この話が刺さる理由'));
+
+  const withTake = { ...config, editorial: { ...config.editorial, originalTake: true } };
+  assert.ok(renderBody(draft, withTake).includes('▼この話が刺さる理由\n・独自の視点。'));
 });
 
 test('箇条書きの先頭にある記号は重複させない', () => {
   const body = renderBody({ ...draft, sections: [{ title: 'a', bullets: ['・すでに点が付いている'] }] }, config);
   assert.ok(body.includes('・すでに点が付いている'));
   assert.ok(!body.includes('・・'));
+});
+
+test('箇条書きの末尾の句点は落とす', () => {
+  const body = renderBody({ ...draft, sections: [{ title: 'a', bullets: ['1990年に引退した。'] }] }, config);
+  assert.ok(body.includes('・1990年に引退した\n'), body);
 });
 
 test('出典リプライは既定で URL を含めない', () => {
@@ -150,20 +162,71 @@ test('相談窓口を設定した場合は付与を強制する', () => {
   assert.ok(!v.errors.some((e) => e.includes('相談窓口')));
 });
 
-test('台帳に無い年号・食い違う年齢を警告する', () => {
+test('生年より前の年号・食い違う年齢を警告する', () => {
   const post = makePost({
-    draft: { ...draft, sections: [{ title: '最期', bullets: ['2015年に事件が起きた', '享年70で世を去った'] }] },
+    draft: { ...draft, sections: [{ title: '最期', bullets: ['1930年に事件が起きた', '享年70で世を去った'] }] },
   });
   post.body = renderBody(post.draft, config);
   const v = inspect(post, { ...subject, birthYear: 1940 }, { config, state: emptyState });
-  assert.ok(v.warnings.some((w) => w.includes('2015')), v.warnings.join(' / '));
+  assert.ok(v.warnings.some((w) => w.includes('1930')), v.warnings.join(' / '));
   assert.ok(v.warnings.some((w) => w.includes('享年')));
+});
+
+test('没後に起きた出来事の年号は咎めない', () => {
+  const post = makePost({
+    draft: { ...draft, sections: [{ title: '最期', bullets: ['1990年に50歳で死去した', '2024年に関係者が訴追された'] }] },
+  });
+  post.body = renderBody(post.draft, config);
+  const v = inspect(post, { ...subject, birthYear: 1940 }, { config, state: emptyState });
+  assert.ok(!v.warnings.some((w) => w.includes('2024')), v.warnings.join(' / '));
 });
 
 test('台帳自体の生没年と享年の矛盾を検出する', () => {
   const broken = { ...subject, birthYear: 1940, deathYear: 1990, ageAtDeath: 80 };
   const v = inspect(makePost(), broken, { config, state: emptyState });
   assert.ok(v.warnings.some((w) => w.includes('矛盾')));
+});
+
+test('冒頭で人物を名指ししていない原稿は弾く', () => {
+  const anonymous = makePost({
+    draft: { ...draft, lead: '1975年、ある大会が開かれた。そこで優勝した男がいた。' },
+  });
+  anonymous.body = renderBody(anonymous.draft, config);
+  const v = inspect(anonymous, subject, { config, state: emptyState });
+  assert.ok(v.errors.some((e) => e.includes('名前')), v.errors.join(' / '));
+
+  // 姓だけでも「誰の話か」は伝わるので通す
+  const surnameOnly = makePost({
+    draft: { ...draft, lead: '1975年、ある大会が開かれた。そこで優勝したペリー。' },
+  });
+  surnameOnly.body = renderBody(surnameOnly.draft, config);
+  const v2 = inspect(surnameOnly, { ...subject, name: 'マシュー・ペリー' }, { config, state: emptyState });
+  assert.ok(!v2.errors.some((e) => e.includes('名前')), v2.errors.join(' / '));
+});
+
+test('状態をまとめただけの抽象語を警告する', () => {
+  const vague = makePost({
+    draft: { ...draft, sections: [{ title: '転落', bullets: ['撮影中ずっと壊れ続けていた', '10年間、依存に苦しんでいた'] }] },
+  });
+  vague.body = renderBody(vague.draft, config);
+  const v = inspect(vague, subject, { config, state: emptyState });
+  assert.ok(v.warnings.some((w) => w.includes('抽象語')), v.warnings.join(' / '));
+});
+
+test('数字の入っていない箇条書きが多いと警告する', () => {
+  const soft = makePost({
+    draft: { ...draft, sections: [{ title: '転落', bullets: ['名声を失った', '誰も訪ねてこなくなった'] }] },
+  });
+  soft.body = renderBody(soft.draft, config);
+  const v = inspect(soft, subject, { config, state: emptyState });
+  assert.ok(v.warnings.some((w) => w.includes('数字')), v.warnings.join(' / '));
+
+  const hard = makePost({
+    draft: { ...draft, sections: [{ title: '転落', bullets: ['3年で全財産を失った', '最後の1年は誰も訪ねてこなかった'] }] },
+  });
+  hard.body = renderBody(hard.draft, config);
+  const v2 = inspect(hard, subject, { config, state: emptyState });
+  assert.ok(!v2.warnings.some((w) => w.includes('数字')), v2.warnings.join(' / '));
 });
 
 test('同じ人物を短期間に再投稿させない', () => {

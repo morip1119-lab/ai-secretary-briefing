@@ -23,7 +23,7 @@ export function renderBody(draft, config = loadConfig()) {
   }
 
   if (ed.originalTake && draft.take) {
-    blocks.push(`${ed.originalTakeHeading}\n${ed.bulletPrefix}${cleanBullet(draft.take)}`);
+    blocks.push(`${ed.originalTakeHeading}\n${ed.bulletPrefix}${stripMark(draft.take)}`);
   }
 
   if (ed.closingLine && draft.closing) blocks.push(tidy(draft.closing));
@@ -67,11 +67,13 @@ export function describeSource(url) {
   }
 }
 
+function stripMark(s) {
+  return String(s).replace(/^[・\-*\s]+/, '').trim();
+}
+
+/** 箇条書きは1行1事実なので、末尾に句点は打たない */
 function cleanBullet(b) {
-  return String(b)
-    .replace(/^[・\-*\s]+/, '')
-    .replace(/\s+$/, '')
-    .trim();
+  return stripMark(b).replace(/[。．]$/, '');
 }
 
 export function bodyStats(body) {
