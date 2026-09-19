@@ -6,7 +6,7 @@ import { weightedLength, hasUrl, truncateWeighted } from '../src/core/text.js';
 import { renderBody, renderSourceReply, describeSource } from '../src/core/formatter.js';
 import { inspect } from '../src/core/guard.js';
 import { zonedToUtc, localDateString } from '../src/core/schedule.js';
-import { wrapJapanese } from '../src/core/imagecard.js';
+import { wrapJapanese, cardHeadline } from '../src/core/imagecard.js';
 import { scoreSubject } from '../src/core/scorer.js';
 import { parseDraftJson } from '../src/core/llm.js';
 import { loadConfig } from '../src/core/config.js';
@@ -277,6 +277,24 @@ test('JST の時刻を UTC に変換する', () => {
   const utc = zonedToUtc('2026-09-10', '07:30', 'Asia/Tokyo');
   assert.equal(utc.toISOString(), '2026-09-09T22:30:00.000Z');
   assert.equal(localDateString(utc, 'Asia/Tokyo'), '2026-09-10');
+});
+
+/* ---------------- 画像カード ---------------- */
+
+test('カードの見出しは draft ではなく本文の1行目に追従する', () => {
+  const post = makePost({ body: '【衝撃】手で直したあとの見出し。\n\n続きの段落。' });
+  assert.deepEqual(cardHeadline(post, subject), { badge: '衝撃', headline: '手で直したあとの見出し。' });
+});
+
+test('本文が空のときは draft のフックに戻る', () => {
+  const post = makePost({ body: '' });
+  assert.equal(cardHeadline(post, subject).headline, draft.hook);
+  assert.equal(cardHeadline(post, subject).badge, '悲劇');
+});
+
+test('フッターの文言を空にしてある', () => {
+  assert.equal(config.image.footerText, '');
+  assert.equal(config.image.showSourceNote, false);
 });
 
 /* ---------------- 折り返し ---------------- */

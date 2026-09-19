@@ -54,15 +54,15 @@ export function renderCard(post, subject, { config = loadConfig(), outFile = nul
   paintBackground(ctx, W, H, theme);
 
   const margin = Math.round(W * 0.07);
-  const badge = post.draft?.badge ?? '悲劇';
+  const { badge, headline } = cardHeadline(post, subject);
   const badgeBottom = drawBadge(ctx, `【${badge}】`, margin, margin, theme, W);
 
-  const footerTop = H - Math.round(margin * 1.1);
+  // フッターを空にしてある場合は、その分だけ文字を大きく置けるようにする
+  const hasFooter = Boolean(cfg.footerText) || Boolean(cfg.showSourceNote && (post.sources ?? []).length);
   const areaTop = badgeBottom + Math.round(H * 0.04);
-  const areaBottom = footerTop - Math.round(H * 0.03);
+  const areaBottom = hasFooter ? H - Math.round(margin * 1.1) - Math.round(H * 0.03) : H - margin;
 
   // 見出し・区切り線・人物情報をひとかたまりとして縦中央に置く
-  const headline = post.draft?.hook ?? subject?.name ?? '';
   const fit = measureAutoFit(ctx, headline, {
     width: W - margin * 2,
     height: areaBottom - areaTop,
@@ -101,7 +101,7 @@ export function renderCard(post, subject, { config = loadConfig(), outFile = nul
     ctx.fillText(meta, margin, y);
   }
 
-  drawFooter(ctx, W, H, margin, theme, cfg, post);
+  if (hasFooter) drawFooter(ctx, W, H, margin, theme, cfg, post);
 
   const file = outFile ?? path.join(MEDIA_DIR, `${post.id}.png`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -150,11 +150,28 @@ function drawBadge(ctx, label, x, y, theme, W) {
   return y + boxH;
 }
 
+/**
+ * カードの見出しは「本文の1行目」を正とする。
+ * draft.hook を見ていると、レビュー画面で本文だけ直したときに
+ * 画像が古い文言のまま取り残されるため。
+ */
+export function cardHeadline(post, subject = null) {
+  const first = String(post?.body ?? '').split('\n\n')[0].trim();
+  const fallbackBadge = post?.draft?.badge ?? '悲劇';
+  if (!first) return { badge: fallbackBadge, headline: post?.draft?.hook ?? subject?.name ?? '' };
+
+  const m = first.match(/^【([^】]+)】\s*([\s\S]*)$/);
+  if (!m) return { badge: fallbackBadge, headline: first };
+  return { badge: m[1], headline: m[2].trim() };
+}
+
 function drawFooter(ctx, W, H, margin, theme, cfg, post) {
-  const size = Math.round(H * 0.034);
-  ctx.font = `${size}px ${FAMILY}`;
-  ctx.fillStyle = theme.sub;
-  ctx.fillText(cfg.footerText ?? '', margin, H - margin * 0.6);
+  if (cfg.footerText) {
+    const size = Math.round(H * 0.034);
+    ctx.font = `${size}px ${FAMILY}`;
+    ctx.fillStyle = theme.sub;
+    ctx.fillText(cfg.footerText, margin, H - margin * 0.6);
+  }
 
   if (cfg.showSourceNote && (post.sources ?? []).length) {
     const note = '出典はリプライ欄に記載';
