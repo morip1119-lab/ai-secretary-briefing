@@ -135,6 +135,17 @@ async function handle(req, res) {
           if (!post.bodyEdited) refreshPost(post, subject, { config, rerender: true });
         }
         post.guard = inspect(post, subject, { config });
+        // 画像は本文の1行目から作るので、文章を直したら作り直しておく。
+        // ここを忘れると、古い見出しの画像がそのまま X に貼られる。
+        if (post.image && config.image.enabled) {
+          const cfg = structuredClone(config);
+          if (post.image.theme) cfg.image.theme = post.image.theme;
+          post.image = {
+            path: renderCard(post, subject, { config: cfg }),
+            generatedAt: new Date().toISOString(),
+            theme: cfg.image.theme,
+          };
+        }
         savePost(post);
         return json(res, 200, decorate(post));
       }
