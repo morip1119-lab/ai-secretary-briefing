@@ -2,21 +2,48 @@ import fs from 'node:fs';
 import { CONFIG_FILE, ENV_FILE } from './paths.js';
 import { UserError } from './logger.js';
 
+/** 本物の環境変数として最初から入っていたキー。CI の Secrets を .env で上書きしないための記録。 */
+let pristineKeys = null;
+
 /**
  * .env を読み込む（依存を増やさないための最小実装）。
- * 既に process.env にある値は上書きしない = CI の Secrets が優先される。
+ * 本物の環境変数が入っているものは上書きしない = CI の Secrets が優先される。
+ *
+ * refresh を立てると、.env の現在の内容で読み直す。
+ * キーを貼ったあと起動し直さないと反映されないのは、
+ * ターミナルに慣れていない人には理不尽なので、必要な場面で読み直せるようにしてある。
  */
-export function loadEnv() {
-  if (!fs.existsSync(ENV_FILE)) return;
-  const raw = fs.readFileSync(ENV_FILE, 'utf8');
-  for (const line of raw.split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (!m) continue;
-    const key = m[1];
-    let value = m[2];
-    if (/^".*"$/.test(value) || /^'.*'$/.test(value)) value = value.slice(1, -1);
-    if (process.env[key] === undefined) process.env[key] = value;
+export function loadEnv({ refresh = false } = {}) {
+  if (!pristineKeys) {
+    pristineKeys = new Set(Object.entries(process.env).filter(([, v]) => v).map(([k]) => k));
   }
+  if (!fs.existsSync(ENV_FILE)) return;
+
+  for (const [key, value] of Object.entries(parseEnvFile(fs.readFileSync(ENV_FILE, 'utf8')))) {
+    if (pristineKeys.has(key)) continue;
+    // 空文字が入っているだけの変数は「未設定」と同じ扱いにする
+    if (!refresh && process.env[key]) continue;
+    process.env[key] = value;
+  }
+}
+
+/**
+ * KEY=VALUE の羅列を読む。
+ *
+ * Windows のエディタで編集される前提なので、BOM・CRLF・全角スペースを吸収する。
+ * ここで値を trim しないと、行末の空白ひとつで API キーが無言で無効になる。
+ */
+export function parseEnvFile(raw) {
+  const out = {};
+  const BLANK = '[ \\t\\u3000]';
+  for (const line of String(raw).replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const m = line.match(new RegExp(`^${BLANK}*([A-Za-z_][A-Za-z0-9_]*)${BLANK}*=(.*)$`));
+    if (!m) continue;
+    let value = m[2].replace(new RegExp(`^${BLANK}+|${BLANK}+$`, 'g'), '');
+    if (/^".*"$/.test(value) || /^'.*'$/.test(value)) value = value.slice(1, -1);
+    out[m[1]] = value;
+  }
+  return out;
 }
 
 let cached = null;

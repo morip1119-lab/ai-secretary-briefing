@@ -10,7 +10,7 @@ import { zonedToUtc, localDateString } from '../src/core/schedule.js';
 import { wrapJapanese, cardHeadline } from '../src/core/imagecard.js';
 import { scoreSubject } from '../src/core/scorer.js';
 import { parseDraftJson, providerStatus, generateDraft } from '../src/core/llm.js';
-import { loadConfig } from '../src/core/config.js';
+import { loadConfig, parseEnvFile } from '../src/core/config.js';
 import { UserError } from '../src/core/logger.js';
 import { startServer } from '../src/server/index.js';
 
@@ -300,6 +300,34 @@ test('フッターの文言を空にしてある', () => {
   assert.equal(config.image.showSourceNote, false);
 });
 
+/* ---------------- .env の読み込み ---------------- */
+
+test('Windows のエディタで保存された .env を読める', () => {
+  const KEY = 'sk-ant-api03-example';
+  const cases = {
+    CRLF: `ANTHROPIC_API_KEY=${KEY}\r\n`,
+    行末の半角スペース: `ANTHROPIC_API_KEY=${KEY}  \n`,
+    行末のタブ: `ANTHROPIC_API_KEY=${KEY}\t\n`,
+    行末の全角スペース: `ANTHROPIC_API_KEY=${KEY}　\n`,
+    'BOM付き': `\uFEFFANTHROPIC_API_KEY=${KEY}\n`,
+    'イコールの後のスペース': `ANTHROPIC_API_KEY= ${KEY}\n`,
+    クォート囲み: `ANTHROPIC_API_KEY="${KEY}"\n`,
+    最終行に改行なし: `ANTHROPIC_API_KEY=${KEY}`,
+  };
+  for (const [name, raw] of Object.entries(cases)) {
+    assert.equal(parseEnvFile(raw).ANTHROPIC_API_KEY, KEY, name);
+  }
+});
+
+test('コメント行と空行は読み飛ばす', () => {
+  const parsed = parseEnvFile('# ANTHROPIC_API_KEY=commented\n\nLLM_PROVIDER=mock\n');
+  assert.deepEqual(parsed, { LLM_PROVIDER: 'mock' });
+});
+
+test('値が空の行は空文字として読む（未設定と区別しない）', () => {
+  assert.equal(parseEnvFile('ANTHROPIC_API_KEY=\n').ANTHROPIC_API_KEY, '');
+});
+
 /* ---------------- 生成の準備状況 ---------------- */
 
 test('mock はキー無しでも生成できる状態として扱う', () => {
@@ -328,6 +356,19 @@ test('キーがあっても、その値を画面に渡さない', () => {
     const st = providerStatus('anthropic');
     assert.equal(st.ready, true);
     assert.ok(!JSON.stringify(st).includes('should-never-leak'));
+  } finally {
+    if (saved === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = saved;
+  }
+});
+
+test('キーに空白が混ざっていたら、キーが違うと言われる前に止める', () => {
+  const saved = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = 'sk-ant api03 broken';
+  try {
+    const st = providerStatus('anthropic');
+    assert.equal(st.ready, false);
+    assert.match(st.reason, /空白や改行/);
   } finally {
     if (saved === undefined) delete process.env.ANTHROPIC_API_KEY;
     else process.env.ANTHROPIC_API_KEY = saved;
