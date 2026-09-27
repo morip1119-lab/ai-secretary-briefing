@@ -127,9 +127,11 @@ macOS は `start.command` をダブルクリック（初回だけ「開発元を
 `config/config.json`（運用方針）は勝手に上書きせず、変更があれば
 `config/config.json.new` を横に置く。中身を見比べて、必要なら差し替える。
 
-> まだ `master` に取り込まれていない間は、`update.bat` が
-> 「ブランチを指定してください」と言ってくる。その場合は黒い画面で
-> `node scripts\update.mjs --branch cursor/shinigiwa-x-auto-post-system-37df`
+取り込み元のブランチは自動で決まる。`master` に入っていればそれを使い、
+まだ入っていなければ置いてあるブランチを探して使う（探した結果は覚えるので、
+2 回目以降は探さない）。黒い画面に出る「〜を取得」の行で、どこから取ったか分かる。
+
+特定のブランチを指定したいときだけ `node scripts\update.mjs --branch ブランチ名`。
 
 ---
 
@@ -180,6 +182,10 @@ Dropbox 配下だと、`node_modules`（数万ファイル）を同期しよう�
 **「キーを受け付けませんでした（401）」と出る**
 キーが違う、または失効している。[console.anthropic.com](https://console.anthropic.com/) で
 発行し直して貼り替える。**キーをスクリーンショットや画面共有に写したら、必ず作り直すこと。**
+
+**`update.bat` が「どのブランチにも shinigiwa/ が見つかりませんでした」と出る**
+リポジトリ名が変わったか、ネットワークが GitHub に届いていない。
+黒い画面に「試したブランチ」が並ぶので、それを添えて相談する。
 
 **そのほか原稿の生成でエラーになる**
 黒い画面で `node src\cli.js doctor` を叩くと、どこが欠けているかが並ぶ。
