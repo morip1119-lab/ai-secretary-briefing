@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { env, loadConfig } from '../core/config.js';
+import { env, loadConfig, loadEnv } from '../core/config.js';
 import { UserError, c, log } from '../core/logger.js';
 import { MEDIA_DIR } from '../core/paths.js';
 import { getPost, getSubject, listPosts, listSubjects, savePost } from '../core/store.js';
@@ -133,6 +133,10 @@ function openBrowser(url) {
 async function handle(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const { pathname } = url;
+
+  // .env にキーを貼ったあと、わざわざ起動し直さなくても効くようにする。
+  // ここを読み直さないと「キーは入れたのに設定されていないと言われる」になる。
+  if (pathname === '/api/state' || pathname === '/api/generate') loadEnv({ refresh: true });
 
   if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
     return sendFile(res, path.join(PUBLIC_DIR, 'index.html'));

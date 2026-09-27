@@ -33,8 +33,13 @@ export function providerStatus(provider = env.llmProvider) {
     return { provider, ready: false, keyName: null, reason: `LLM_PROVIDER が ${provider} になっています（mock | anthropic | openai）` };
   }
   const keyName = provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY';
-  const ready = Boolean(process.env[keyName]);
-  return { provider, ready, keyName, reason: ready ? null : `${keyName} が設定されていません` };
+  const key = process.env[keyName];
+  if (!key) return { provider, ready: false, keyName, reason: `${keyName} が設定されていません` };
+  // 貼り付けのときに改行やスペースが紛れ込むと、キーが違うと言われるだけで理由が分からない
+  if (/\s/.test(key)) {
+    return { provider, ready: false, keyName, reason: `${keyName} の値に空白や改行が混ざっています` };
+  }
+  return { provider, ready: true, keyName, reason: null };
 }
 
 /* ---------------- テンプレ生成（APIキー不要） ---------------- */
@@ -92,7 +97,7 @@ async function callAnthropic(subject, config) {
     }),
   });
 
-  if (!res.ok) throw new UserError(`Anthropic API エラー ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw apiError('Anthropic', res.status, await res.text(), 'ANTHROPIC_API_KEY');
   const json = await res.json();
   const text = (json.content ?? []).map((b) => b.text ?? '').join('');
   return { draft: parseDraftJson(text, subject), meta: { provider: 'anthropic', model } };
@@ -118,7 +123,7 @@ async function callOpenAI(subject, config) {
     }),
   });
 
-  if (!res.ok) throw new UserError(`OpenAI API エラー ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw apiError('OpenAI', res.status, await res.text(), 'OPENAI_API_KEY');
   const json = await res.json();
   const text = json.choices?.[0]?.message?.content ?? '';
   return { draft: parseDraftJson(text, subject), meta: { provider: 'openai', model } };
@@ -130,13 +135,36 @@ async function callOpenAI(subject, config) {
  * キーが無いことを伝えるより、どこに何を書けば直るかを伝える。
  * .env は起動時にしか読まれないので、入れ直しが必要なことまで書く。
  */
+/** API が断ってきた理由を、次に何をすればいいかに翻訳する */
+function apiError(label, status, body, keyName) {
+  if (status === 401 || status === 403) {
+    return new UserError(
+      [
+        `${label} がキーを受け付けませんでした（${status}）。`,
+        `${keyName} の値が違うか、失効しているか、前後に余分な文字が入っています。`,
+        `${ENV_FILE} を開いてキーを貼り直してください（前後にスペースを入れない、クォートで囲まない）。`,
+      ].join('\n'),
+      { kind: 'setup' },
+    );
+  }
+  if (status === 429) {
+    return new UserError(`${label} のレート上限に当たりました（429）。少し待ってからもう一度試してください。`, {
+      kind: 'setup',
+    });
+  }
+  if (status === 402 || /credit|billing|quota/i.test(body)) {
+    return new UserError(`${label} の残高・利用枠が足りないようです（${status}）。\n${body}`, { kind: 'setup' });
+  }
+  return new UserError(`${label} API エラー ${status}: ${body}`);
+}
+
 function missingKeyError(name, issueUrl) {
   return new UserError(
     [
       `${name} が設定されていません。`,
       `1. ${issueUrl} でキーを発行する`,
-      `2. ${ENV_FILE} をメモ帳で開き、${name}= の右に貼り付けて保存する`,
-      '3. 黒い画面を Ctrl+C で止めて、start をもう一度動かす（.env は起動時にしか読まれません）',
+      `2. ${ENV_FILE} をメモ帳で開き、${name}= の右に貼り付けて保存する（前後にスペースを入れない）`,
+      '3. 保存したら、レビュー画面の「再読込」を押す（起動し直す必要はありません）',
       'キー無しで試すだけなら、.env の LLM_PROVIDER を mock にすると台帳の内容をそのまま組み立てます。',
     ].join('\n'),
     { kind: 'setup' },

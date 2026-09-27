@@ -215,9 +215,8 @@ function renderSetupBanner() {
   banner.innerHTML =
     '<b>原稿を生成できません。</b>' + escapeHtml(st.reason || '') + '<ol>' +
     '<li><code>.env</code> をメモ帳で開き、<code>' + escapeHtml(st.keyName || '') +
-      '=</code> の右にキーを貼り付けて保存する</li>' +
-    '<li>黒い画面を Ctrl+C で止めて、<code>start</code> をもう一度動かす' +
-      '（<code>.env</code> は起動時にしか読まれません）</li>' +
+      '=</code> の右にキーを貼り付けて保存する（前後にスペースを入れない）</li>' +
+    '<li>保存したら、右上の<b>「再読込」</b>を押す（黒い画面は止めなくてよい）</li>' +
     '</ol>キー無しで試すだけなら、<code>.env</code> の <code>LLM_PROVIDER</code> を ' +
     '<code>mock</code> にすると、ネタ台帳に書いた内容をそのまま組み立てます。';
 }
