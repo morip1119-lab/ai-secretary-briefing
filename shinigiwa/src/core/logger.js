@@ -24,4 +24,16 @@ export const log = {
     console.log(c.dim('─'.repeat(6) + (title ? ` ${title} ` : '') + '─'.repeat(Math.max(0, 60 - title.length)))),
 };
 
-export class UserError extends Error {}
+/**
+ * 利用者の操作・設定が原因のエラー。スタックトレースは見せない。
+ *
+ * kind は表示の出し分けに使う。
+ *   'notFound' … 画面が古い情報を握っている（再読込で直る）
+ *   'setup'    … .env や設定を直す必要がある（再読込では直らない）
+ */
+export class UserError extends Error {
+  constructor(message, { kind = 'generic' } = {}) {
+    super(message);
+    this.kind = kind;
+  }
+}

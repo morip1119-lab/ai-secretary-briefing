@@ -35,7 +35,7 @@ export function saveSubjects(subjects) {
 
 export function getSubject(id) {
   const s = listSubjects().find((x) => x.id === id);
-  if (!s) throw new UserError(`subject が見つかりません: ${id}`);
+  if (!s) throw new UserError(`subject が見つかりません: ${id}`, { kind: 'notFound' });
   return s;
 }
 
@@ -67,7 +67,7 @@ export function listPosts(filter = {}) {
 
 export function getPost(id) {
   const p = readJson(postFile(id), null);
-  if (!p) throw new UserError(`post が見つかりません: ${id}`);
+  if (!p) throw new UserError(`post が見つかりません: ${id}`, { kind: 'notFound' });
   return p;
 }
 

@@ -103,8 +103,22 @@
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--panel-2); border: 1px solid var(--line); padding: 10px 20px;
     border-radius: 8px; font-size: 13px; opacity: 0; transition: .25s; pointer-events: none;
+    max-width: min(680px, 90vw); white-space: pre-line; line-height: 1.7; text-align: left;
   }
   .toast.on { opacity: 1; }
+  .toast.bad { border-color: #7d3a32; background: #241413; }
+  /* 生成の準備ができていないことは、ボタンを押す前に見えていないと意味がない */
+  .banner {
+    margin: 14px 20px 0; padding: 12px 16px; border-radius: 8px;
+    border: 1px solid #7d3a32; background: #1e1211; font-size: 13px; line-height: 1.8;
+  }
+  .banner b { color: #e8a39a; }
+  .banner ol { margin: 6px 0 0; padding-left: 20px; }
+  .banner code {
+    background: #000; padding: 1px 6px; border-radius: 4px;
+    font-family: ui-monospace, monospace; font-size: 12px;
+  }
+  .banner.hidden { display: none; }
   .score { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
 </style>
 </head>
@@ -117,6 +131,8 @@
   <button id="genBtn">原稿を生成</button>
   <button class="ghost" id="reloadBtn">再読込</button>
 </header>
+
+<div class="banner hidden" id="setupBanner"></div>
 
 <main>
   <aside>
@@ -146,12 +162,15 @@ let selectedId = null;
 
 const $ = (id) => document.getElementById(id);
 
-function toast(msg) {
+function toast(msg, bad) {
   const t = $('toast');
   t.textContent = msg;
+  t.classList.toggle('bad', Boolean(bad));
   t.classList.add('on');
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('on'), 2200);
+  // 手順が書かれた長い案内を2秒で消すと読み切れない
+  const ms = Math.min(15000, 2200 + String(msg).length * 90);
+  t._timer = setTimeout(() => t.classList.remove('on'), ms);
 }
 
 async function api(path, options) {
@@ -179,9 +198,28 @@ async function load() {
   $('providerPill').textContent = '生成: ' + state.provider;
   $('modePill').textContent = state.dryRun ? 'DRY RUN' : '本番投稿ON';
   $('modePill').className = 'pill ' + (state.dryRun ? 'dry' : 'live');
+  renderSetupBanner();
   renderTabs();
   renderList();
   renderDetail();
+}
+
+function renderSetupBanner() {
+  const st = state.providerStatus || { ready: true };
+  const banner = $('setupBanner');
+  banner.classList.toggle('hidden', st.ready);
+  $('genBtn').disabled = !st.ready;
+  $('genBtn').title = st.ready ? '' : st.reason || '';
+  if (st.ready) return;
+
+  banner.innerHTML =
+    '<b>原稿を生成できません。</b>' + escapeHtml(st.reason || '') + '<ol>' +
+    '<li><code>.env</code> をメモ帳で開き、<code>' + escapeHtml(st.keyName || '') +
+      '=</code> の右にキーを貼り付けて保存する</li>' +
+    '<li>黒い画面を Ctrl+C で止めて、<code>start</code> をもう一度動かす' +
+      '（<code>.env</code> は起動時にしか読まれません）</li>' +
+    '</ol>キー無しで試すだけなら、<code>.env</code> の <code>LLM_PROVIDER</code> を ' +
+    '<code>mock</code> にすると、ネタ台帳に書いた内容をそのまま組み立てます。';
 }
 
 function renderTabs() {
@@ -409,10 +447,11 @@ $('genBtn').onclick = async () => {
     toast(created.length ? '原稿を生成しました' : '生成できるネタがありません');
     await load();
   } catch (e) {
-    toast(e.message);
+    toast(e.message, true);
   } finally {
     $('genBtn').disabled = false;
     $('genBtn').textContent = '原稿を生成';
+    renderSetupBanner();
   }
 };
 $('reloadBtn').onclick = () => load();

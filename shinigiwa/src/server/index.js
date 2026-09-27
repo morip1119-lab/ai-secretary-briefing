@@ -12,6 +12,7 @@ import { buildPost, markPosted, refreshPost, sourceReplyFor } from '../core/pipe
 import { bodyStats } from '../core/formatter.js';
 import { renderCard } from '../core/imagecard.js';
 import { inspect } from '../core/guard.js';
+import { providerStatus } from '../core/llm.js';
 
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 
@@ -59,8 +60,14 @@ export async function startServer({ port = env.reviewPort, open = false, tryOthe
 function listenOn(port) {
   const server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
-      // 原稿ファイルを消したあとに古い画面から操作された場合など、原因が利用者側にあるものは 404 で返す
-      if (e instanceof UserError) return json(res, 404, { error: `${e.message}（画面を再読込してください）` });
+      if (e instanceof UserError) {
+        // 再読込で直るのは「画面が古い情報を握っている」ときだけ。
+        // 設定を直さないと直らないものに再読込を勧めると、同じ操作を繰り返させてしまう。
+        const stale = e.kind === 'notFound';
+        return json(res, stale ? 404 : 400, {
+          error: stale ? `${e.message}（画面を再読込してください）` : e.message,
+        });
+      }
       log.error(e.stack ?? e.message);
       json(res, 500, { error: e.message });
     });
@@ -148,6 +155,7 @@ async function handle(req, res) {
       config: { channel: config.channel, posting: config.posting, image: config.image },
       dryRun: env.dryRun,
       provider: env.llmProvider,
+      providerStatus: providerStatus(),
       posts: listPosts().map(decorate),
       subjects: rankSubjects(listSubjects()).slice(0, 40),
     });

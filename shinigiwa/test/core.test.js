@@ -9,7 +9,7 @@ import { inspect } from '../src/core/guard.js';
 import { zonedToUtc, localDateString } from '../src/core/schedule.js';
 import { wrapJapanese, cardHeadline } from '../src/core/imagecard.js';
 import { scoreSubject } from '../src/core/scorer.js';
-import { parseDraftJson } from '../src/core/llm.js';
+import { parseDraftJson, providerStatus, generateDraft } from '../src/core/llm.js';
 import { loadConfig } from '../src/core/config.js';
 import { UserError } from '../src/core/logger.js';
 import { startServer } from '../src/server/index.js';
@@ -298,6 +298,55 @@ test('本文が空のときは draft のフックに戻る', () => {
 test('フッターの文言を空にしてある', () => {
   assert.equal(config.image.footerText, '');
   assert.equal(config.image.showSourceNote, false);
+});
+
+/* ---------------- 生成の準備状況 ---------------- */
+
+test('mock はキー無しでも生成できる状態として扱う', () => {
+  const st = providerStatus('mock');
+  assert.equal(st.ready, true);
+  assert.equal(st.reason, null);
+});
+
+test('キーが無いときは、キー名だけを返す（キーそのものは返さない）', () => {
+  const saved = process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
+  try {
+    const st = providerStatus('anthropic');
+    assert.equal(st.ready, false);
+    assert.equal(st.keyName, 'ANTHROPIC_API_KEY');
+    assert.match(st.reason, /設定されていません/);
+  } finally {
+    if (saved !== undefined) process.env.ANTHROPIC_API_KEY = saved;
+  }
+});
+
+test('キーがあっても、その値を画面に渡さない', () => {
+  const saved = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = 'sk-ant-should-never-leak';
+  try {
+    const st = providerStatus('anthropic');
+    assert.equal(st.ready, true);
+    assert.ok(!JSON.stringify(st).includes('should-never-leak'));
+  } finally {
+    if (saved === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = saved;
+  }
+});
+
+test('設定が原因のエラーは notFound と区別できる（再読込を勧めないため）', async () => {
+  const saved = process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
+  try {
+    await assert.rejects(() => generateDraft(subject, { provider: 'anthropic', config }), (e) => {
+      assert.ok(e instanceof UserError);
+      assert.equal(e.kind, 'setup');
+      assert.match(e.message, /LLM_PROVIDER を mock/);
+      return true;
+    });
+  } finally {
+    if (saved !== undefined) process.env.ANTHROPIC_API_KEY = saved;
+  }
 });
 
 /* ---------------- 二重起動 ---------------- */

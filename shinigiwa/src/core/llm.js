@@ -1,5 +1,6 @@
 import { env, loadConfig } from './config.js';
 import { UserError } from './logger.js';
+import { ENV_FILE } from './paths.js';
 import { systemPrompt, userPrompt } from './prompt.js';
 
 /**
@@ -18,6 +19,22 @@ export async function generateDraft(subject, { provider = env.llmProvider, confi
     default:
       throw new UserError(`未知の LLM_PROVIDER: ${provider}（mock | anthropic | openai）`);
   }
+}
+
+/**
+ * 生成の準備ができているかを返す。レビュー画面の注意書きに使う。
+ * キーそのものは絶対に返さない（画面や API 経由で漏れるため）。
+ */
+export function providerStatus(provider = env.llmProvider) {
+  if (provider === 'mock') {
+    return { provider, ready: true, keyName: null, reason: null };
+  }
+  if (provider !== 'anthropic' && provider !== 'openai') {
+    return { provider, ready: false, keyName: null, reason: `LLM_PROVIDER が ${provider} になっています（mock | anthropic | openai）` };
+  }
+  const keyName = provider === 'openai' ? 'OPENAI_API_KEY' : 'ANTHROPIC_API_KEY';
+  const ready = Boolean(process.env[keyName]);
+  return { provider, ready, keyName, reason: ready ? null : `${keyName} が設定されていません` };
 }
 
 /* ---------------- テンプレ生成（APIキー不要） ---------------- */
@@ -57,7 +74,7 @@ export function fromTemplate(subject, config = loadConfig()) {
 
 async function callAnthropic(subject, config) {
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new UserError('ANTHROPIC_API_KEY が設定されていません。');
+  if (!key) throw missingKeyError('ANTHROPIC_API_KEY', 'https://console.anthropic.com/');
   const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5';
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -85,7 +102,7 @@ async function callAnthropic(subject, config) {
 
 async function callOpenAI(subject, config) {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new UserError('OPENAI_API_KEY が設定されていません。');
+  if (!key) throw missingKeyError('OPENAI_API_KEY', 'https://platform.openai.com/api-keys');
   const model = process.env.OPENAI_MODEL || 'gpt-4.1';
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -108,6 +125,23 @@ async function callOpenAI(subject, config) {
 }
 
 /* ---------------- 共通 ---------------- */
+
+/**
+ * キーが無いことを伝えるより、どこに何を書けば直るかを伝える。
+ * .env は起動時にしか読まれないので、入れ直しが必要なことまで書く。
+ */
+function missingKeyError(name, issueUrl) {
+  return new UserError(
+    [
+      `${name} が設定されていません。`,
+      `1. ${issueUrl} でキーを発行する`,
+      `2. ${ENV_FILE} をメモ帳で開き、${name}= の右に貼り付けて保存する`,
+      '3. 黒い画面を Ctrl+C で止めて、start をもう一度動かす（.env は起動時にしか読まれません）',
+      'キー無しで試すだけなら、.env の LLM_PROVIDER を mock にすると台帳の内容をそのまま組み立てます。',
+    ].join('\n'),
+    { kind: 'setup' },
+  );
+}
 
 export function parseDraftJson(text, subject) {
   const cleaned = text
