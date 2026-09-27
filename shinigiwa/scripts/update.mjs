@@ -25,21 +25,23 @@ const SYNC_DIRS = ['src', 'scripts', 'test', 'docs'];
 const SYNC_FILES = ['package.json', 'package-lock.json', 'README.md', '.env.example', 'start.bat', 'start.command', 'update.bat'];
 /** ネタ台帳のうち、手元の値を必ず残すキー（投稿の実績） */
 const SUBJECT_STATE_KEYS = ['status', 'lastPostedAt'];
+/** どのブランチから取り込んだかの記録。次回の探索を省くためだけに使う */
+const SOURCE_FILE = path.join(ROOT, 'data', 'source.json');
 
 const c = process.stdout.isTTY
   ? { dim: (s) => `\u001b[2m${s}\u001b[0m`, bold: (s) => `\u001b[1m${s}\u001b[0m`, cyan: (s) => `\u001b[36m${s}\u001b[0m`, yellow: (s) => `\u001b[33m${s}\u001b[0m`, red: (s) => `\u001b[31m${s}\u001b[0m`, green: (s) => `\u001b[32m${s}\u001b[0m` }
   : new Proxy({}, { get: () => (s) => s });
 
-const branch = argValue('--branch') ?? DEFAULT_BRANCH;
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'shinigiwa-update-'));
 
 console.log('');
-console.log(`  ${c.bold('更新を取り込みます')}  ${c.dim(`${REPO} / ${branch}`)}`);
+console.log(`  ${c.bold('更新を取り込みます')}  ${c.dim(REPO)}`);
 console.log('');
 
 try {
-  const source = await download(branch);
+  const { branch, source } = await resolveSource();
   const { changed, notes } = apply(source);
+  rememberBranch(branch);
 
   console.log('');
   if (changed.length === 0) {
@@ -64,36 +66,149 @@ try {
 
 // ---------------------------------------------------------------
 
+/**
+ * どこから取り込むかを決めて、展開済みのフォルダを返す。
+ *
+ * ダブルクリックで運用する前提なので「ブランチを指定して叩き直してください」で
+ * 終わらせない。master にまだ入っていない間も、置いてあるブランチを自分で探す。
+ */
+async function resolveSource() {
+  const asked = argValue('--branch');
+  if (asked) {
+    const source = await download(asked);
+    if (source) return { branch: asked, source };
+    throw new Error(`ブランチ ${asked} から ${PROJECT_DIR}/ を取れませんでした。`);
+  }
+
+  const tried = [];
+  for await (const ref of candidateBranches()) {
+    if (tried.includes(ref)) continue;
+    tried.push(ref);
+    const source = await download(ref);
+    if (source) return { branch: ref, source };
+  }
+
+  throw new Error(
+    [
+      `${REPO} のどのブランチにも ${PROJECT_DIR}/ が見つかりませんでした。`,
+      `    試したブランチ: ${tried.join(', ')}`,
+      '    ブランチが分かっている場合:  node scripts/update.mjs --branch ブランチ名',
+    ].join('\n'),
+  );
+}
+
+/**
+ * 試す順番。master にマージされたらそちらが正なので先に見る。
+ * 探索は前の候補が外れたときにしか動かない（API の呼び出しを無駄にしないため）。
+ */
+async function* candidateBranches() {
+  yield DEFAULT_BRANCH;
+
+  const remembered = rememberedBranch();
+  if (remembered) yield remembered;
+
+  const found = await findBranchWithProject();
+  if (found) yield found;
+}
+
+/** shinigiwa/ が置かれているブランチを探す。名前に shinigiwa を含むものから当たる。 */
+async function findBranchWithProject() {
+  process.stdout.write(`  ${c.cyan('›')} 置き場所を探しています ... `);
+  const branches = await githubJson(`https://api.github.com/repos/${REPO}/branches?per_page=100`);
+  if (!Array.isArray(branches)) {
+    console.log('できませんでした');
+    return null;
+  }
+
+  const names = branches.map((b) => b.name).filter(Boolean).sort((a, b) => score(b) - score(a));
+  // 未認証の GitHub API は回数が限られているので、当てにいく数を絞る
+  for (const name of names.slice(0, 8)) {
+    const url = `https://api.github.com/repos/${REPO}/contents/${PROJECT_DIR}?ref=${encodeURIComponent(name)}`;
+    const res = await githubJson(url, { raw: true });
+    if (res?.ok) {
+      console.log(`${name} にありました`);
+      return name;
+    }
+  }
+  console.log('見つかりませんでした');
+  return null;
+}
+
+function score(name) {
+  return (name.includes(PROJECT_DIR) ? 2 : 0) + (name.startsWith('cursor/') ? 1 : 0);
+}
+
+async function githubJson(url, { raw = false } = {}) {
+  try {
+    const res = await fetch(url, {
+      headers: { accept: 'application/vnd.github+json', 'user-agent': 'shinigiwa-updater' },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (raw) return res;
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberedBranch() {
+  try {
+    return JSON.parse(fs.readFileSync(SOURCE_FILE, 'utf8')).branch ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberBranch(branch) {
+  if (rememberedBranch() === branch) return;
+  try {
+    fs.mkdirSync(path.dirname(SOURCE_FILE), { recursive: true });
+    fs.writeFileSync(SOURCE_FILE, `${JSON.stringify({ branch }, null, 2)}\n`, 'utf8');
+  } catch {
+    /* 覚えられなくても、次回また探すだけ */
+  }
+}
+
+/**
+ * ブランチの zip を落として展開する。
+ * ブランチが無い、または shinigiwa/ が入っていない場合は null（次の候補を試す合図）。
+ */
 async function download(ref) {
   const url = `https://codeload.github.com/${REPO}/zip/refs/heads/${ref}`;
-  process.stdout.write(`  ${c.cyan('›')} ダウンロード中 ... `);
+  process.stdout.write(`  ${c.cyan('›')} ${ref} を取得 ... `);
 
   let res;
   try {
     res = await fetch(url, { signal: AbortSignal.timeout(120_000) });
   } catch {
+    console.log('失敗');
     throw new Error('GitHub に接続できませんでした。ネットワークを確認してください。');
   }
-  if (res.status === 404) throw new Error(`ブランチ ${ref} が見つかりません。\n    別のブランチなら:  node scripts/update.mjs --branch ブランチ名`);
-  if (!res.ok) throw new Error(`ダウンロードに失敗しました (HTTP ${res.status})`);
+  if (res.status === 404) {
+    console.log('ブランチがありません');
+    return null;
+  }
+  if (!res.ok) {
+    console.log('失敗');
+    throw new Error(`ダウンロードに失敗しました (HTTP ${res.status})`);
+  }
 
-  const zip = path.join(work, 'source.zip');
+  const dir = path.join(work, ref.replace(/[^A-Za-z0-9._-]/g, '_'));
+  const zip = path.join(dir, 'source.zip');
+  fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(zip, Buffer.from(await res.arrayBuffer()));
-  console.log(`ok (${Math.round(fs.statSync(zip).size / 1024)} KB)`);
 
-  const out = path.join(work, 'unpacked');
+  const out = path.join(dir, 'unpacked');
   fs.mkdirSync(out, { recursive: true });
   extract(zip, out);
 
   const [top] = fs.readdirSync(out);
   const source = path.join(out, top ?? '', PROJECT_DIR);
   if (!fs.existsSync(source)) {
-    throw new Error(
-      `ブランチ ${ref} に ${PROJECT_DIR}/ がありません。\n` +
-        '    まだ master に取り込まれていない場合は、ブランチを指定してください:\n' +
-        '      node scripts/update.mjs --branch cursor/shinigiwa-x-auto-post-system-37df',
-    );
+    console.log(`${PROJECT_DIR}/ は入っていません`);
+    return null;
   }
+  console.log(`ok (${Math.round(fs.statSync(zip).size / 1024)} KB)`);
   return source;
 }
 
