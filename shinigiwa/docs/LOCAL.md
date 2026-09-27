@@ -187,5 +187,16 @@ Dropbox 配下だと、`node_modules`（数万ファイル）を同期しよう�
 リポジトリ名が変わったか、ネットワークが GitHub に届いていない。
 黒い画面に「試したブランチ」が並ぶので、それを添えて相談する。
 
+**`update.bat` が「ブランチを指定してください」で止まる（古い版）**
+更新スクリプト自体が古い。いまの `update.bat` は失敗すると自動で取り直すが、
+その仕組みが入る前の版だと自力で直せない。フォルダのアドレスバーに `powershell`
+と打って Enter を押し、開いた画面で 1 回だけこれを実行する。
+
+```
+node scripts\update.mjs --branch cursor/shinigiwa-x-auto-post-system-37df
+```
+
+以降は `update.bat` のダブルクリックだけでよい。
+
 **そのほか原稿の生成でエラーになる**
 黒い画面で `node src\cli.js doctor` を叩くと、どこが欠けているかが並ぶ。
