@@ -28,10 +28,19 @@ await ensureFonts();
 warnAboutApiKey();
 
 const { startServer } = await import('../src/server/index.js');
+const { UserError } = await import('../src/core/logger.js');
 const { loadEnv } = await import('../src/core/config.js');
 loadEnv();
-await startServer({ open: true });
-await new Promise(() => {});
+
+try {
+  const server = await startServer({ open: true });
+  // 既に別のウィンドウで動いていた場合は server が null。開くだけ開いて終わる。
+  if (server) await new Promise(() => {});
+} catch (e) {
+  // 手順の問題を長いスタックトレースで見せても何も伝わらないので、原因だけ出す
+  if (e instanceof UserError) fail(...e.message.split('\n').map((l) => l.trim()));
+  throw e;
+}
 
 // ---------------------------------------------------------------
 

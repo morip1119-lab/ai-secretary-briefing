@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import { createCanvas } from '@napi-rs/canvas';
 
 import { weightedLength, hasUrl, truncateWeighted } from '../src/core/text.js';
@@ -10,6 +11,8 @@ import { wrapJapanese, cardHeadline } from '../src/core/imagecard.js';
 import { scoreSubject } from '../src/core/scorer.js';
 import { parseDraftJson } from '../src/core/llm.js';
 import { loadConfig } from '../src/core/config.js';
+import { UserError } from '../src/core/logger.js';
+import { startServer } from '../src/server/index.js';
 
 const config = loadConfig();
 const emptyState = { postedSubjects: {}, history: [] };
@@ -295,6 +298,46 @@ test('本文が空のときは draft のフックに戻る', () => {
 test('フッターの文言を空にしてある', () => {
   assert.equal(config.image.footerText, '');
   assert.equal(config.image.showSourceNote, false);
+});
+
+/* ---------------- 二重起動 ---------------- */
+
+test('同じシステムが起動済みのポートを指すと、立て直さずにそちらを返す', async () => {
+  const first = await startServer({ port: 4399, open: false, tryOtherPorts: 0 });
+  assert.ok(first, '1回目は自分で待ち受ける');
+  try {
+    const again = await startServer({ port: 4399, open: false, tryOtherPorts: 0 });
+    assert.equal(again, null, '2回目は null（起動済みなので開くだけ）');
+  } finally {
+    first.close();
+  }
+});
+
+test('別のアプリがポートを使っていたら次のポートに逃げる', async () => {
+  const foreign = http.createServer((_, res) => res.end('not shinigiwa'));
+  await new Promise((r) => foreign.listen(4400, '127.0.0.1', r));
+  try {
+    const server = await startServer({ port: 4400, open: false, tryOtherPorts: 1 });
+    assert.ok(server);
+    assert.equal(server.address().port, 4401);
+    server.close();
+  } finally {
+    foreign.close();
+  }
+});
+
+test('逃げ先が無ければ、手順を示すエラーにする（スタックトレースを見せない）', async () => {
+  const foreign = http.createServer((_, res) => res.end('not shinigiwa'));
+  await new Promise((r) => foreign.listen(4402, '127.0.0.1', r));
+  try {
+    await assert.rejects(() => startServer({ port: 4402, open: false, tryOtherPorts: 0 }), (e) => {
+      assert.ok(e instanceof UserError);
+      assert.match(e.message, /REVIEW_PORT/);
+      return true;
+    });
+  } finally {
+    foreign.close();
+  }
 });
 
 /* ---------------- 折り返し ---------------- */

@@ -23,7 +23,40 @@ const MIME = {
   '.svg': 'image/svg+xml',
 };
 
-export function startServer({ port = env.reviewPort, open = false } = {}) {
+/**
+ * レビュー画面を立ち上げる。
+ *
+ * ダブルクリックで起動する使い方だと、前のウィンドウを閉じ忘れたまま
+ * もう一度起動されることが普通に起きる。そのときにエラーで落とすのではなく、
+ * 動いているほうにブラウザを向けて終わる。
+ *
+ * @returns server が null のときは、既に動いているものを開いただけ（この呼び出しは終了してよい）
+ */
+export async function startServer({ port = env.reviewPort, open = false, tryOtherPorts = 3 } = {}) {
+  for (let p = port; p <= port + tryOtherPorts; p += 1) {
+    const server = await listenOn(p);
+    if (server) {
+      announceStarted(p, open, port);
+      return server;
+    }
+
+    if (await isReviewServer(p)) {
+      announceAlreadyRunning(p, open);
+      return null;
+    }
+    // 別のアプリがそのポートを使っている。次を試す。
+  }
+
+  throw new UserError(
+    [
+      `ポート ${port}${tryOtherPorts > 0 ? `〜${port + tryOtherPorts}` : ''} がすべて他のアプリに使われています。`,
+      '  使うポートを変えるには、.env の REVIEW_PORT を別の番号（例: 5100）にしてください。',
+    ].join('\n'),
+  );
+}
+
+/** 指定ポートで待ち受ける。すでに使われていたら null を返す。 */
+function listenOn(port) {
   const server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
       // 原稿ファイルを消したあとに古い画面から操作された場合など、原因が利用者側にあるものは 404 で返す
@@ -34,30 +67,43 @@ export function startServer({ port = env.reviewPort, open = false } = {}) {
   });
 
   return new Promise((resolve, reject) => {
-    server.once('error', (e) => {
-      if (e.code !== 'EADDRINUSE') return reject(e);
-      reject(
-        new UserError(
-          [
-            `ポート ${port} はすでに使われています。`,
-            '  別のウィンドウで起動済みなら、そちらのブラウザをそのまま使ってください。',
-            `  同時に動かしたい場合は  node src/cli.js review --port ${port + 1}`,
-          ].join('\n'),
-        ),
-      );
-    });
-
-    server.listen(port, '127.0.0.1', () => {
-      const url = `http://localhost:${port}`;
-      log.blank();
-      log.ok(`レビュー画面: ${c.cyan(url)}`);
-      log.info(c.dim('  ブラウザが開かない場合は、上の URL をコピーして開いてください'));
-      log.info(c.dim('  終了するときは Ctrl+C（この画面を閉じても止まります）'));
-      log.blank();
-      if (open) openBrowser(url);
-      resolve(server);
-    });
+    server.once('error', (e) => (e.code === 'EADDRINUSE' ? resolve(null) : reject(e)));
+    server.listen(port, '127.0.0.1', () => resolve(server));
   });
+}
+
+/** そのポートで動いているのが自分と同じシステムかどうか */
+async function isReviewServer(port) {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/ping`, { signal: AbortSignal.timeout(1500) });
+    if (!res.ok) return false;
+    return (await res.json()).app === 'shinigiwa';
+  } catch {
+    return false;
+  }
+}
+
+function announceStarted(port, open, requested) {
+  const url = `http://localhost:${port}`;
+  log.blank();
+  log.ok(`レビュー画面: ${c.cyan(url)}`);
+  if (port !== requested) {
+    log.info(c.dim(`  ポート ${requested} は他のアプリが使っていたので ${port} にしました`));
+  }
+  log.info(c.dim('  ブラウザが開かない場合は、上の URL をコピーして開いてください'));
+  log.info(c.dim('  終了するときは Ctrl+C（この画面を閉じても止まります）'));
+  log.blank();
+  if (open) openBrowser(url);
+}
+
+function announceAlreadyRunning(port, open) {
+  const url = `http://localhost:${port}`;
+  log.blank();
+  log.ok(`すでに別のウィンドウで起動しています: ${c.cyan(url)}`);
+  log.info(c.dim('  そのウィンドウは閉じないでください。閉じると画面も止まります'));
+  log.info(c.dim(open ? '  ブラウザでそちらを開きました' : '  上の URL をブラウザで開いてください'));
+  log.blank();
+  if (open) openBrowser(url);
 }
 
 /** 既定のブラウザで開く。開けなくても運用はできるので失敗は無視する。 */
@@ -89,6 +135,11 @@ async function handle(req, res) {
     const file = path.join(MEDIA_DIR, path.basename(pathname));
     if (!fs.existsSync(file)) return json(res, 404, { error: 'not found' });
     return sendFile(res, file);
+  }
+
+  // 二重起動の判定に使う。重い処理は一切しない。
+  if (req.method === 'GET' && pathname === '/api/ping') {
+    return json(res, 200, { app: 'shinigiwa', pid: process.pid });
   }
 
   if (req.method === 'GET' && pathname === '/api/state') {
