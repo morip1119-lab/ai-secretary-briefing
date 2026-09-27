@@ -1,0 +1,3 @@
+# バッチファイルは CRLF のまま配布する。
+# 改行が LF になると Windows の cmd が goto/ラベルを読み違えることがある。
+*.bat -text
